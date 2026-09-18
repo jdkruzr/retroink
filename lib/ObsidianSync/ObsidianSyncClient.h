@@ -35,16 +35,24 @@ class ObsidianSyncClient {
 
   // Sends every pending clipping to the configured destination, in order,
   // stopping at the first failure so nothing already-delivered is lost and
-  // nothing unsent is skipped over. Successfully delivered clippings are
-  // removed from the queue; the rest remain for the next attempt. Returns
-  // the number of clippings delivered.
+  // nothing unsent is skipped over -- unless that clipping has now failed
+  // MAX_DELIVERY_ATTEMPTS times in a row, in which case it's given up on
+  // (logged to ObsidianPendingQueue::FAILED_PATH, see lastDroppedCount())
+  // instead of blocking every clipping behind it forever. Successfully
+  // delivered and given-up clippings are both removed from the queue; the
+  // rest remain for the next attempt. Returns the number delivered.
   static size_t syncPending();
 
   static Error lastError() { return _lastError; }
   static int lastHttpCode() { return _lastHttpCode; }
+  // How many clippings the most recent syncPending() call gave up on and
+  // removed from the queue after MAX_DELIVERY_ATTEMPTS failures. 0 in the
+  // common case.
+  static size_t lastDroppedCount() { return _lastDroppedCount; }
   static std::string errorString(Error error);
 
  private:
   static Error _lastError;
   static int _lastHttpCode;
+  static size_t _lastDroppedCount;
 };

@@ -38,7 +38,12 @@ no delay in the reader. Nothing is sent until a sync runs. Sync is:
 
 A sync stops at the first clipping it can't deliver, so nothing already sent
 is lost and nothing unsent is skipped. Whatever didn't go through stays
-queued for the next attempt.
+queued for the next attempt, unless it's now failed 5 times in a row: at
+that point it's almost certainly a permanent rejection rather than a
+transient hiccup (a malformed clipping, a rule on the receiving end), so
+RetroInk gives up on that one clipping specifically, logs it to
+`.crosspoint/obsidian-failed.jsonl` on the SD card, and keeps going instead
+of letting it block everything behind it forever.
 
 ## Setup: Local REST API plugin
 
@@ -225,3 +230,10 @@ Wi-Fi network (or the internet, if that's where it lives).
 Auto-sync only fires when File Transfer or Calibre Wireless mode starts, not
 continuously in the background. Use **Sync Now** in the web UI at any time to
 drain the queue immediately.
+
+**"Sync Now" says some clippings were skipped**
+
+One or more clippings failed to deliver 5 times in a row and were given up
+on rather than left blocking the rest of the queue forever. Check
+`.crosspoint/obsidian-failed.jsonl` on the SD card (plain JSON, one clipping
+per line, with a `reason` field) to see what didn't make it and why.

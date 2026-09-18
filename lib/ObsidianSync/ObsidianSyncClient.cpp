@@ -24,6 +24,7 @@
 
 ObsidianSyncClient::Error ObsidianSyncClient::_lastError = ObsidianSyncClient::OK;
 int ObsidianSyncClient::_lastHttpCode = 0;
+size_t ObsidianSyncClient::_lastDroppedCount = 0;
 
 namespace {
 
@@ -215,6 +216,7 @@ bool leaksKeyInCleartext(const std::string& url, const std::string& apiKey) {
 size_t ObsidianSyncClient::syncPending() {
   _lastError = OK;
   _lastHttpCode = 0;
+  _lastDroppedCount = 0;
 
   const ObsidianSyncConfig& cfg = OBSIDIAN_STORE.getConfig();
   if (!cfg.enabled || cfg.baseUrl.empty()) {
@@ -228,7 +230,7 @@ size_t ObsidianSyncClient::syncPending() {
     return 0;
   }
 
-  const auto pending = ObsidianPendingQueue::readAll();
+  auto pending = ObsidianPendingQueue::readAll();
   if (pending.empty()) {
     _lastError = NOTHING_PENDING;
     return 0;
@@ -239,27 +241,55 @@ size_t ObsidianSyncClient::syncPending() {
     return 0;
   }
 
+  // `consumed` counts entries to drop from the front of the queue: both
+  // delivered clippings and ones given up on below. Every clipping ahead of
+  // wherever the loop stops (via `break`, on a failure that hasn't hit
+  // MAX_DELIVERY_ATTEMPTS yet) is always one of those two, so the queue
+  // remainder is still a simple prefix removal, same as before this
+  // give-up mechanism existed.
   size_t sent = 0;
-  for (const auto& clipping : pending) {
+  size_t consumed = 0;
+  for (size_t i = 0; i < pending.size(); i++) {
+    const auto& clipping = pending[i];
     const int code =
         cfg.mode == ObsidianTargetMode::WEBHOOK ? pushWebhook(cfg, clipping) : pushLocalRestApi(cfg, clipping);
     _lastHttpCode = code;
     const Error result = classifyHttpCode(code);
-    if (result != OK) {
+    if (result == OK) {
+      sent++;
+      consumed++;
+      continue;
+    }
+
+    const uint8_t attempts = clipping.failCount + 1;
+    if (attempts < ObsidianPendingQueue::MAX_DELIVERY_ATTEMPTS) {
+      // Might still be transient (the target briefly down, a Wi-Fi hiccup):
+      // persist the bumped count and stop here, same as always, so nothing
+      // behind it gets skipped while it could still succeed later.
       _lastError = result;
+      pending[i].failCount = attempts;
       break;
     }
-    sent++;
+
+    // Failed MAX_DELIVERY_ATTEMPTS times in a row: almost certainly a
+    // permanent rejection (malformed content, a receiver-side validation
+    // rule), not a transient hiccup. Give up on it instead of blocking
+    // every clipping behind it forever, and keep going.
+    LOG_ERR("OBS", "Giving up on a clipping after %u failed attempts (%s)", attempts, errorString(result).c_str());
+    ObsidianPendingQueue::appendFailed(clipping, errorString(result));
+    _lastDroppedCount++;
+    consumed++;
   }
 
-  if (sent > 0 && !ObsidianPendingQueue::removeFirst(sent)) {
-    LOG_ERR("OBS", "Delivered %u clippings but failed to drain the queue; they will resend next sync",
-            static_cast<unsigned>(sent));
+  const std::vector<ObsidianPendingClipping> remaining(pending.begin() + static_cast<long>(consumed), pending.end());
+  if (!ObsidianPendingQueue::replaceAll(remaining)) {
+    LOG_ERR("OBS", "Synced/dropped %u clippings but failed to update the queue; they may resend or block again",
+            static_cast<unsigned>(consumed));
   }
 
-  LOG_DBG("OBS", "Sync delivered %u/%u pending clippings (lastError=%d, lastHttpCode=%d)",
-          static_cast<unsigned>(sent), static_cast<unsigned>(pending.size()), static_cast<int>(_lastError),
-          _lastHttpCode);
+  LOG_DBG("OBS", "Sync delivered %u, gave up on %u, %u left pending (lastError=%d, lastHttpCode=%d)",
+          static_cast<unsigned>(sent), static_cast<unsigned>(_lastDroppedCount),
+          static_cast<unsigned>(remaining.size()), static_cast<int>(_lastError), _lastHttpCode);
 
   return sent;
 }

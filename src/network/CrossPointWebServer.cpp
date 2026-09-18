@@ -2432,12 +2432,20 @@ void CrossPointWebServer::handlePostObsidianSync() const {
   // so this is the cheapest possible moment to drain the pending queue.
   const size_t sent = ObsidianSyncClient::syncPending();
   const ObsidianSyncClient::Error error = ObsidianSyncClient::lastError();
+  const size_t dropped = ObsidianSyncClient::lastDroppedCount();
+
+  std::string message = ObsidianSyncClient::errorString(error);
+  if (dropped > 0) {
+    message += " (" + std::to_string(dropped) + (dropped == 1 ? " clipping" : " clippings") +
+               " could not be delivered after repeated attempts and were skipped)";
+  }
 
   JsonDocument doc;
   doc["ok"] = error == ObsidianSyncClient::OK || error == ObsidianSyncClient::NOTHING_PENDING;
   doc["synced"] = static_cast<uint32_t>(sent);
   doc["remaining"] = static_cast<uint32_t>(ObsidianPendingQueue::count());
-  doc["message"] = ObsidianSyncClient::errorString(error);
+  doc["droppedPermanently"] = static_cast<uint32_t>(dropped);
+  doc["message"] = message;
 
   String output;
   serializeJson(doc, output);

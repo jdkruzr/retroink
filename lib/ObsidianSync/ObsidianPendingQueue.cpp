@@ -16,6 +16,7 @@ void serializeLine(const ObsidianPendingClipping& c, std::string& outLine) {
   doc["page"] = c.page;
   doc["text"] = c.text;
   doc["ts"] = c.timestamp;
+  doc["fc"] = c.failCount;
   outLine.clear();
   serializeJson(doc, outLine);
 }
@@ -34,6 +35,7 @@ bool parseLine(const std::string& line, ObsidianPendingClipping& out) {
   out.page = doc["page"] | 0;
   out.text = doc["text"] | "";
   out.timestamp = doc["ts"] | 0u;
+  out.failCount = doc["fc"] | 0;  // absent on lines written before this field existed
   return true;
 }
 
@@ -93,25 +95,22 @@ bool hasPending() { return count() > 0; }
 
 size_t count() { return readAll().size(); }
 
-bool removeFirst(size_t sentCount) {
-  if (sentCount == 0) return true;
-
-  auto pending = readAll();
-  if (sentCount >= pending.size()) {
+bool replaceAll(const std::vector<ObsidianPendingClipping>& remaining) {
+  if (remaining.empty()) {
     Storage.remove(PENDING_PATH);
     return !Storage.exists(PENDING_PATH);
   }
 
   std::string rebuilt;
-  for (size_t i = sentCount; i < pending.size(); i++) {
+  for (const auto& c : remaining) {
     std::string line;
-    serializeLine(pending[i], line);
+    serializeLine(c, line);
     rebuilt += line;
     rebuilt += '\n';
   }
 
   if (!Storage.writeFile(TMP_PATH, rebuilt.c_str())) {
-    LOG_ERR("OBS", "Failed to write %s while draining the pending queue", TMP_PATH);
+    LOG_ERR("OBS", "Failed to write %s while updating the pending queue", TMP_PATH);
     return false;
   }
   Storage.remove(PENDING_PATH);
@@ -120,6 +119,41 @@ bool removeFirst(size_t sentCount) {
     return false;
   }
   return true;
+}
+
+bool removeFirst(size_t sentCount) {
+  if (sentCount == 0) return true;
+
+  auto pending = readAll();
+  if (sentCount >= pending.size()) return replaceAll({});
+  return replaceAll(std::vector<ObsidianPendingClipping>(pending.begin() + sentCount, pending.end()));
+}
+
+bool appendFailed(const ObsidianPendingClipping& clipping, const std::string& reason) {
+  JsonDocument doc;
+  doc["book"] = clipping.book;
+  doc["author"] = clipping.author;
+  doc["chapter"] = clipping.chapter;
+  doc["page"] = clipping.page;
+  doc["text"] = clipping.text;
+  doc["ts"] = clipping.timestamp;
+  doc["reason"] = reason;
+  std::string line;
+  serializeJson(doc, line);
+  line += '\n';
+
+  FsFile file = Storage.open(FAILED_PATH, O_RDWR | O_CREAT | O_AT_END);
+  if (!file) {
+    LOG_ERR("OBS", "Failed to open %s for append", FAILED_PATH);
+    return false;
+  }
+  const bool ok = file.write(line.data(), line.size()) == line.size();
+  file.flush();
+  file.close();
+  if (!ok) {
+    LOG_ERR("OBS", "Failed to write given-up clipping to %s", FAILED_PATH);
+  }
+  return ok;
 }
 
 }  // namespace ObsidianPendingQueue
