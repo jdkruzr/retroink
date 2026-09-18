@@ -315,11 +315,12 @@ bool HalGPIO::isUsbConnected() const {
     // elsewhere (the charging-screen guard, the battery percent poll). At an
     // unthrottled loop() rate that's a lot of I2C round trips a second, and a
     // visible drag on button responsiveness and page-turn latency. A cable
-    // being plugged in is a physical human action, not something that needs
-    // sub-200ms detection, so cache the read and only refresh it that often.
+    // being plugged in is a physical human action; even noticing it a second
+    // late is imperceptible, so cache the read generously.
     static const BatteryMonitor battery;
+    constexpr unsigned long kUsbCheckIntervalMs = 750;
     const unsigned long now = millis();
-    if (!usbCheckedOnce || now - lastUsbCheckMs >= 200) {
+    if (!usbCheckedOnce || now - lastUsbCheckMs >= kUsbCheckIntervalMs) {
       cachedUsbConnected = battery.isCharging();
       lastUsbCheckMs = now;
       usbCheckedOnce = true;
