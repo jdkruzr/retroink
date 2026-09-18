@@ -1,0 +1,101 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+import { getDocs, BASE } from '../lib/docs';
+
+// getDocs() already returns just the curated RetroInk-specific set (see
+// FEATURED_SLUGS in lib/docs.ts). That's this page's "Useful docs" list too.
+const docs = await getDocs();
+const base = BASE;
+---
+
+<SiteLayout
+  title="RetroInk"
+  description="Everything you love about CrossInk, now with a System 6 retro redesign, a reimagined stats dashboard, a real library, Focus Session reading goals, and Obsidian clip syncing."
+  pageClass="home"
+>
+  <section slot="hero" class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">A fork of <a href="https://github.com/uxjulia/CrossInk">CrossInk</a>, by AltFlow</p>
+      <h1>RetroInk</h1>
+      <p class="hero-text">
+        Everything you love about CrossInk, now with a full System 6 retro
+        redesign, a reimagined stats dashboard, a real library, Focus Session
+        reading goals, and Obsidian clip syncing.
+      </p>
+      <div class="hero-actions">
+        <a class="button primary" href={`${base}installation.html`}>Installation Instructions</a>
+        <a class="button" href={`${base}whats-different.html`}>What's different</a>
+      </div>
+    </div>
+    <div class="device-mock hero-image">
+      <img class="device-frame" src={`${base}images/x3-frame.png`} alt="" loading="eager" />
+      <div class="device-screen">
+        <img
+          class="fill-screen"
+          src={`${base}images/retroink-home-with-book.png`}
+          alt="RetroInk's Home screen, styled after classic Macintosh System 6"
+          loading="eager"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="section-heading">
+    <p class="eyebrow">On top of CrossInk</p>
+    <h2>What RetroInk adds</h2>
+  </section>
+  <div class="intro-grid">
+    <div>
+      <span>Retro UI</span>
+      <strong>
+        A full System 6 redesign: striped title bars, pixel-drawn Mac chrome,
+        and a boot sequence with animated eyes, all drawn live with no extra
+        framebuffers.
+      </strong>
+    </div>
+    <div>
+      <span>Stats Dashboard</span>
+      <strong>
+        Reimagined reading stats: daily goal progress, a 7-day streak strip,
+        and a full year-long contribution-style calendar grid.
+      </strong>
+    </div>
+    <div>
+      <span>Real Library</span>
+      <strong>
+        Shelves for To Read, Reading, Finished, and Favorites, four sort
+        modes, A-Z jump, and an SD-backed catalog built for thousands of
+        books.
+      </strong>
+    </div>
+    <div>
+      <span>Focus Session</span>
+      <strong>
+        Configurable reading sessions and daily goals, Wi-Fi off while you
+        read, and a countdown that survives sleep with accurate time
+        remaining.
+      </strong>
+    </div>
+    <div>
+      <span>Obsidian Sync</span>
+      <strong>
+        Push saved highlights straight into your Obsidian vault, over your
+        local network or a webhook, on top of the existing clippings export.
+      </strong>
+    </div>
+  </div>
+
+  <section class="section-heading">
+    <p class="eyebrow">Start here</p>
+    <h2>Useful docs</h2>
+  </section>
+  <nav class="useful-docs" aria-label="Useful documentation">
+    {
+      docs.map((doc) => (
+        <a href={doc.url}>
+          <span>{doc.title}</span>
+        </a>
+      ))
+    }
+  </nav>
+</SiteLayout>

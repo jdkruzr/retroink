@@ -1,0 +1,357 @@
+/* Shared chrome for all RetroInk web portal pages.
+   Page-specific rules live in each page's own inline <style>. */
+:root {
+  --font-color: #0a0a0a;
+  --bg: #fafafa;
+  --title-color: #0a0a0a;
+  --card-bg: #ffffff;
+  --label-color: #4b4b4b;
+  --border-color: #0a0a0a;
+  --divider-color: #d8d8d8;
+  --accent-color: #4caf50;
+  --accent-hover-color: #388e3c;
+  --accent-soft: rgba(76, 175, 80, 0.14);
+  --accent-color-10: rgba(76, 175, 80, 0.1);
+  --accent-fg: #ffffff;
+  --logo-filter: brightness(0);
+  --success-color: #2e7d32;
+  --success-bg: rgba(46, 125, 50, 0.08);
+  --success-border: rgba(46, 125, 50, 0.4);
+  --success-hover: #1b5e20;
+  --danger-color: #c62828;
+  --danger-bg: rgba(198, 40, 40, 0.06);
+  --danger-border: rgba(198, 40, 40, 0.4);
+  --danger-hover: #8e0000;
+  --toggle-bg: #cfcfcf;
+  --radius-lg: 0px;
+  --radius-md: 0px;
+  --radius-sm: 0px;
+  --shadow-sm: 3px 3px 0 rgba(10, 10, 10, 0.4);
+  --shadow-md: 6px 6px 0 rgba(10, 10, 10, 0.4);
+  /* The device's checkerboard is 1-bit e-ink: solid ink vs. paper, no soft
+     gray. A muted version dissolves into noise at this tile size, so match
+     it directly to --bg/--border-color rather than inventing a subtler pair. */
+  --checker-a: var(--bg);
+  --checker-b: var(--border-color);
+}
+/* No prefers-color-scheme override: the real device is reflective e-ink and
+   can't invert either, so windows (cards, nav, header) stay white paper with
+   black ink as the accent, always - matching the hardware instead of the
+   browser's dark-mode preference. */
+* {
+  box-sizing: border-box;
+}
+@font-face {
+  /* The actual font the on-device System6 theme draws its UI chrome with -
+     see System6Fonts.cpp/System6FontData.h, rasterized from ChicagoFLF.ttf
+     (assets/system6/, public domain). Self-hosted (not Google Fonts) since
+     the portal has no guaranteed internet path, and subset to basic Latin
+     (U+0020-007E) since that covers every static UI string this portal
+     uses - see the regen command in scripts/build_web.py. */
+  font-family: "ChicagoFLF";
+  src: url("/chicago.ttf") format("truetype");
+  font-display: swap;
+}
+body {
+  /* ChicagoFLF only covers basic Latin, so anything outside it (accented
+     characters in a book title, symbols, emoji icons) falls through per
+     character to the Inter/system-UI fallbacks below, same as the device's
+     own font resolver falling back to Inter for strings Chicago can't
+     render (see resolveSystem6Font in System6Fonts.cpp). */
+  font-family: "ChicagoFLF", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding: 28px 28px 56px;
+  background-color: var(--bg);
+  /* Same tiny axis-aligned checker as the device's own System6 desktop
+     texture (drawRetroInkDesktop in BootActivity.cpp: 2x2 filled squares
+     on a 4x4 repeat, alternating per band) - a conic-gradient reproduces
+     that exact 2px-square geometry in one layer, unlike a diagonal
+     crosshatch. */
+  background-image: conic-gradient(
+    var(--checker-a) 90deg,
+    var(--checker-b) 90deg 180deg,
+    var(--checker-a) 180deg 270deg,
+    var(--checker-b) 270deg 360deg
+  );
+  background-size: 4px 4px;
+  color: var(--font-color);
+  line-height: 1.5;
+}
+h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--title-color);
+  font-size: 1.6em;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0 0 18px;
+  width: fit-content;
+  padding: 10px 18px;
+  background: var(--card-bg);
+  border: 3px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+.logo-mark {
+  height: 1.25em;
+  width: auto;
+  flex-shrink: 0;
+  color: var(--title-color);
+}
+.card {
+  background: var(--card-bg);
+  border-radius: 0;
+  padding: 0 20px 20px;
+  margin: 18px 0;
+  border: 3px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+/* Shared page-header panel (title + action buttons row): used by multiple
+   pages (files, library), so it lives here rather than per-page CSS - a
+   page that reused the markup without also copying the rule would render
+   its title with no backing panel, straight over the checkerboard. */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  background: var(--card-bg);
+  border: 3px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+.page-header h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 1em;
+}
+.page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+/* Shared save/error toast: used standalone at the top of settings and
+   library (outside any card, straight on the checkerboard), so it needs a
+   solid backing like .page-header above - a translucent tint (fine for the
+   same colors used *inside* a card, e.g. the WiFi status badge) all but
+   disappears against the checkerboard and leaves the text unreadable. */
+.message {
+  display: none;
+  padding: 12px;
+  margin: 0 0 20px;
+  text-align: center;
+  font-weight: 700;
+  background: var(--card-bg);
+  border: 3px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+.message.success {
+  color: var(--success-color);
+  border-color: var(--success-border);
+}
+.message.error {
+  color: var(--danger-color);
+  border-color: var(--danger-border);
+}
+/* Classic System 6 window title bar: bold black/white pinstripes flanking
+   a plain cutout that the title text sits on, like the device's own
+   "Reading Desk" header - not a faint tint behind flush text. */
+.card > h2 {
+  display: flex;
+  align-items: center;
+  margin: 0 -20px 18px;
+  padding: 10px 20px;
+  background: var(--card-bg);
+  color: var(--title-color);
+  font-size: 0.95em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.card > h2::before,
+.card > h2::after {
+  content: "";
+  flex: 1 1 32px;
+  align-self: stretch;
+  background-color: var(--card-bg);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--border-color) 0,
+    var(--border-color) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+}
+.card > h2::before {
+  margin-right: 14px;
+}
+.card > h2::after {
+  margin-left: 14px;
+}
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 0 0 24px;
+  padding: 0;
+  background: var(--card-bg);
+  border: 3px solid var(--border-color);
+  border-radius: 0;
+  box-shadow: var(--shadow-md);
+  width: 100%;
+}
+.nav-links a {
+  flex: 1 1 110px;
+  text-align: center;
+  padding: 9px 18px;
+  color: var(--font-color);
+  text-decoration: none;
+  border-radius: 0;
+  border-right: 2px solid var(--border-color);
+  font-size: 0.88em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.nav-links a:last-child {
+  border-right: none;
+}
+.nav-links a.active {
+  background: var(--border-color);
+  color: var(--card-bg);
+}
+.nav-links a:not(.active):hover {
+  background: var(--accent-soft);
+}
+.loader-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+}
+.loader {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 0.9s linear infinite;
+}
+@keyframes rotation {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.footer {
+  width: fit-content;
+  margin: 20px auto 0;
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  padding: 6px 14px;
+  color: var(--label-color);
+  font-size: 0.82em;
+}
+/* Buttons: shared retro treatment for every button-like element across pages.
+   Deliberately not a bare `button` selector: that would also catch minimal
+   icon-only buttons like .modal-close and .dismiss-btn, which shouldn't get
+   a border/shadow/uppercase treatment. */
+.btn,
+.action-btn,
+.save-btn,
+.upload-btn,
+.folder-btn,
+.delete-btn,
+.rename-btn,
+.move-btn,
+.retry-btn,
+.retry-all-btn,
+.legend-btn,
+.rotation-btn,
+.overlap-btn,
+.quality-preset,
+.btn-small,
+.btn-add,
+.btn-delete,
+.btn-save-server,
+.delete-btn-confirm,
+.delete-btn-cancel,
+.rename-btn-confirm,
+.move-btn-confirm {
+  border-radius: 0 !important;
+  /* Hard offset "sticker" shadow plus a light-top-left/dark-bottom-right
+     inset bevel, like a classic raised Mac OS button. */
+  box-shadow:
+    var(--shadow-sm),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.5),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.25);
+  font-family: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.btn:active,
+.action-btn:active,
+.save-btn:active,
+.upload-btn:active,
+.folder-btn:active,
+.delete-btn:active,
+.rename-btn:active,
+.move-btn:active,
+.retry-btn:active,
+.retry-all-btn:active,
+.legend-btn:active,
+.rotation-btn:active,
+.overlap-btn:active,
+.quality-preset:active,
+.btn-small:active,
+.btn-add:active,
+.btn-delete:active,
+.btn-save-server:active,
+.delete-btn-confirm:active,
+.delete-btn-cancel:active,
+.rename-btn-confirm:active,
+.move-btn-confirm:active {
+  transform: translate(2px, 2px);
+  /* Bevel flips inward on press, like the button is physically pushed in. */
+  box-shadow:
+    inset -1px -1px 0 rgba(255, 255, 255, 0.4),
+    inset 1px 1px 0 rgba(0, 0, 0, 0.25);
+}
+input,
+select,
+textarea {
+  border-radius: 0 !important;
+  font-family: inherit;
+}
+@media (max-width: 600px) {
+  body {
+    padding: 16px 12px 40px;
+    font-size: 14px;
+  }
+  .card {
+    padding: 0 14px 16px;
+    margin: 14px 0;
+  }
+  .card > h2 {
+    margin: 0 -14px 14px;
+    padding: 9px 14px;
+  }
+  h1 {
+    font-size: 1.3em;
+  }
+  .nav-links a {
+    padding: 7px 12px;
+    font-size: 0.82em;
+  }
+  .page-header {
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+  .page-header-left {
+    gap: 8px;
+  }
+}

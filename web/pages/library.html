@@ -1,0 +1,44 @@
+<div class="page-header">
+  <div class="page-header-left">
+    <h2>Library</h2>
+    <span class="summary-inline" id="library-summary"></span>
+  </div>
+  <div class="action-buttons">
+    <button class="action-btn" id="newShelfBtn" onclick="openNewShelfPrompt()">+ New Shelf</button>
+  </div>
+</div>
+
+<div id="message" class="message"></div>
+
+<div class="card shelf-tabs-card">
+  <div class="shelf-tabs">
+    <button class="shelf-tab active" id="smartTabBtn" onclick="switchShelfTab('smart')">Smart Shelves</button>
+    <button class="shelf-tab" id="customTabBtn" onclick="switchShelfTab('custom')">Your Shelves</button>
+  </div>
+
+  <div class="shelf-tab-panel active" id="smartPanel">
+    <p class="shelf-hint">
+      Read-only: computed from your actual reading activity, not something to drag books into or out of.
+    </p>
+    <div class="shelf-board" id="smartBoard">
+      <div class="loader-container"><span class="loader"></span></div>
+    </div>
+  </div>
+
+  <div class="shelf-tab-panel" id="customPanel">
+    <p class="shelf-hint">Drag a book onto a shelf to move it there. Works with touch too.</p>
+    <div class="shelf-board" id="customBoard"></div>
+  </div>
+</div>
+
+<!-- New/rename shelf modal -->
+<div class="modal-overlay" id="shelfModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeShelfModal()">&times;</button>
+    <h3 id="shelfModalTitle">New Shelf</h3>
+    <div class="upload-form">
+      <input type="text" id="shelfNameInput" placeholder="Shelf name" maxlength="31" />
+      <button class="action-btn" id="shelfModalSave" onclick="submitShelfModal()">Save</button>
+    </div>
+  </div>
+</div>

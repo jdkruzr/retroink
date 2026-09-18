@@ -1,0 +1,88 @@
+---
+import '../styles/site.css';
+import '@fontsource-variable/jetbrains-mono';
+import { getDocs, BASE } from '../lib/docs';
+
+type Props = {
+  title?: string;
+  description?: string;
+  pageClass?: string;
+};
+
+const docs = await getDocs();
+const { title = 'RetroInk', description = 'RetroInk e-reader firmware documentation', pageClass = '' } = Astro.props;
+const pageTitle = title === 'RetroInk' ? title : `${title} | RetroInk`;
+const currentDoc = docs.find((doc) => Astro.url.pathname === doc.url);
+const base = BASE;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg?v=2`} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet" />
+    <title>{pageTitle}</title>
+  </head>
+  <body class={pageClass}>
+    <header class="site-header">
+      <div class="brand">
+        <a href={base} aria-label="RetroInk home">
+          <img class="brand-mark" src={`${base}logo.png`} alt="" />
+        </a>
+        <span>
+          <a class="brand-title" href={base}>
+            <strong>RetroInk</strong>
+          </a>
+          <small>E-reader Firmware &middot; by <a href="https://altflow.dev">AltFlow</a></small>
+        </span>
+      </div>
+      <nav class="top-nav" aria-label="Primary navigation">
+        <a href={`${base}docs.html`}>Docs</a>
+        <a href={`${base}installation.html`}>Install</a>
+        <a href={`${base}reader-features.html`}>Features</a>
+        <a href="https://github.com/smashedllama/retroink">GitHub</a>
+      </nav>
+    </header>
+    <slot name="hero" />
+    <div class="shell">
+      <aside class="docs-sidebar" aria-label="Documentation navigation">
+        <div class="sidebar-title">Documentation</div>
+        <nav>
+          {
+            docs.map((doc) => (
+              <a class:list={['sidebar-link', { active: Astro.url.pathname === doc.url }]} href={doc.url}>
+                {doc.title}
+              </a>
+            ))
+          }
+        </nav>
+      </aside>
+      <main class="content">
+        <details class="mobile-docs-nav">
+          <summary>
+            <span>Docs</span>
+            {currentDoc && <strong>{currentDoc.title}</strong>}
+          </summary>
+          <nav aria-label="Mobile documentation navigation">
+            {
+              docs.map((doc) => (
+                <a class:list={['mobile-docs-link', { active: Astro.url.pathname === doc.url }]} href={doc.url}>
+                  {doc.title}
+                </a>
+              ))
+            }
+          </nav>
+        </details>
+        <slot />
+      </main>
+    </div>
+    <footer class="site-footer">
+      <a href="https://buymeacoffee.com/erunyan">Buy me a coffee</a>
+    </footer>
+  </body>
+</html>
