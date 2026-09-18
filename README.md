@@ -22,13 +22,18 @@ RetroInk is distributed under the MIT License. See [LICENSE](./LICENSE) and
 ## What RetroInk adds
 
 - A dedicated RetroInk interface with large, readable System 6-inspired type.
-- Macintosh-style windows, menus, controls, dialogs, icons, and progress bars.
+- Macintosh-style windows, menus, controls, dialogs, icons, and progress bars, covering every screen, not just a handful of them.
 - A RetroInk boot sequence with an animated Macintosh glance.
-- A themed sleep screen and monochrome book-cover rendering.
+- Three playful Mac-style sleep screen dialogs to choose from, on top of the plain themed default, plus monochrome book-cover rendering.
+- An optional charging screen that appears automatically when you plug in and aren't actively reading.
 - Code-drawn graphics that avoid extra framebuffers and large theme bitmaps.
-- A Finder-style Library for large nested collections, with automatic reading shelves, favorite pins, title/filename/author/recent sorts, and A-Z jumps.
+- A Finder-style Library for large nested collections: automatic reading shelves (To Read, Reading, Finished, Favorites), your own custom shelves you create and name yourself, title/filename/author/recent sorts, and A-Z jumps.
+- A shelf-based way to browse the library on-device: books stand as spines on a shelf, Left/Right page through the current shelf, Up/Down switch straight to the next one, built in or custom, no menu in the way.
+- Daily reading goals with a streak tracker and an in-reader countdown badge, plus a themed stats dashboard (Today, Reading Year, Book Status) when the System 6 theme is active.
+- Focus Session, a configurable timer for focusing away from the device, checkpointed so it survives sleep.
 - Safe book moves across the device, web file manager, and WebDAV. RetroInk reviews old and current reading records before restoring progress after a move made elsewhere.
 - [Obsidian Clipping Sync](./docs/obsidian-sync.md): pushes saved highlights into an Obsidian vault over the local network (via the Local REST API plugin) or a webhook, on top of the existing `/My Clippings.txt` export.
+- A matching System 6 redesign of the on-device web portal (the page you get connecting over Wi-Fi in File Transfer mode), including a Library tab with drag-and-drop custom shelves.
 
 ## CrossInk foundation
 
@@ -137,9 +142,7 @@ See [Simulator](./docs/simulator.md) for setup, platform notes, keyboard control
 
 ## Installation
 
-The fastest way to install Crossink is by using Inky, Crossink's web companion app: https://inky.crossink.dev/#flash-tools
-
-Download a `firmware-*.bin` from the [releases page](https://github.com/uxjulia/CrossInk/releases), then flash it with the web installer or command line.
+Download a `firmware-x3-x4-*.bin` from [RetroInk's releases page](https://github.com/smashedllama/retroink/releases), then flash it with [Inky](https://inky.crossink.dev/#flash-tools), the CrossInk-family web installer, or the command line.
 
 See [Installation](./docs/installation.md) for step-by-step flashing and revert instructions.
 
@@ -208,7 +211,7 @@ See [Testing and Debugging](./docs/development/testing-debugging.md) for serial 
 - `freeink-sdk/` - hardware SDK submodule for display, input, storage, and battery (docs: https://freeink.org/docs)
 - `web/` - web portal sources (`templates/`, `pages/`, `assets/`); compiled by `scripts/build_web.py` into `src/network/html/*.generated.h`
 - `docs/` - user and developer documentation, published via the `site/` Astro site
-- `site/` - Astro project that builds `docs/` into the CrossInk documentation website
+- `site/` - Astro project that builds `docs/` into the RetroInk documentation website
 - `test/` - unit tests and EPUB test fixtures
 - `scripts/` - build, codegen, and release tooling (i18n generation, web asset building, hyphenation tries, release packaging, etc.)
 - `bin/` - helper scripts for formatting (`clang-format-fix`) and CI checks
