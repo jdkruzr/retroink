@@ -610,6 +610,24 @@ pre code {
   color: var(--accent-strong);
 }
 
+.feature-screenshot {
+  margin: 0 0 32px;
+  text-align: center;
+}
+
+.feature-screenshot img {
+  max-width: min(100%, 320px);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.feature-screenshot figcaption {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
 .device-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
