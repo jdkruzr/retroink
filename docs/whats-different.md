@@ -44,7 +44,7 @@ CrossInk doesn't have reading goals at all; this is new in RetroInk and it's wha
 
 ## Real Library
 
-<img class="doc-screenshot" src="./images/retroink-library.png" alt="RetroInk's on-device Library screen, showing the To Read shelf as book spines you page through" />
+<div class="device-mock"><img class="device-frame" src="./images/x3-frame.png" alt="" /><div class="device-screen"><img class="fill-screen" src="./images/retroink-library.png" alt="RetroInk's on-device Library screen, showing the To Read shelf as book spines you page through" /></div></div>
 
 A proper library, not a flat file list: shelves for **To Read, Reading, Finished, and Favorites**, four sort modes (Title, Filename, Author, Recent), and an A-Z jump list. It's backed by an SD-side catalog, not an in-RAM list, built to hold thousands of books on the X3/X4's limited memory, and it scans your folders incrementally instead of blocking on a full rescan. Move or rename a book on the SD card yourself, and RetroInk reconciles the catalog entry instead of treating it as a new, unread book.
 
