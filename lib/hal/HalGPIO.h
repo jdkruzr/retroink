@@ -26,6 +26,10 @@ class HalGPIO {
 
   bool lastUsbConnected = false;
   bool usbStateChanged = false;
+  // isUsbConnected() throttle (X3 only - see the .cpp for why).
+  mutable bool cachedUsbConnected = false;
+  mutable unsigned long lastUsbCheckMs = 0;
+  mutable bool usbCheckedOnce = false;
 
  public:
   enum class DeviceType : uint8_t { X4, X3 };

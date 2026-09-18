@@ -309,8 +309,22 @@ bool HalGPIO::isUsbConnected() const {
   if (deviceIsX3()) {
     // X3 has no USB-detect pin; infer external power from the gauge's charge
     // current via the SDK's BatteryMonitor (BQ27220 Current() > 0 = charging).
+    // BatteryMonitor::isCharging() does a fresh I2C register read every call
+    // with no caching of its own, and this method runs on every main loop()
+    // iteration (via update()) plus several more direct calls per iteration
+    // elsewhere (the charging-screen guard, the battery percent poll). At an
+    // unthrottled loop() rate that's a lot of I2C round trips a second, and a
+    // visible drag on button responsiveness and page-turn latency. A cable
+    // being plugged in is a physical human action, not something that needs
+    // sub-200ms detection, so cache the read and only refresh it that often.
     static const BatteryMonitor battery;
-    return battery.isCharging();
+    const unsigned long now = millis();
+    if (!usbCheckedOnce || now - lastUsbCheckMs >= 200) {
+      cachedUsbConnected = battery.isCharging();
+      lastUsbCheckMs = now;
+      usbCheckedOnce = true;
+    }
+    return cachedUsbConnected;
   }
 #endif
   if (BoardConfig::ACTIVE.usbDetect >= 0) {
