@@ -44,13 +44,17 @@ CrossInk doesn't have reading goals at all; this is new in RetroInk and it's wha
 
 ## Real Library
 
-<div class="device-mock"><img class="device-frame" src="./images/x3-frame.png" alt="" /><div class="device-screen"><img class="fill-screen" src="./images/retroink-library.png" alt="RetroInk Library with shelf and sort breadcrumb" /></div></div>
+<img class="doc-screenshot" src="./images/retroink-library.png" alt="RetroInk's on-device Library screen, showing the To Read shelf as book spines you page through" />
 
 A proper library, not a flat file list: shelves for **To Read, Reading, Finished, and Favorites**, four sort modes (Title, Filename, Author, Recent), and an A-Z jump list. It's backed by an SD-side catalog, not an in-RAM list, built to hold thousands of books on the X3/X4's limited memory, and it scans your folders incrementally instead of blocking on a full rescan. Move or rename a book on the SD card yourself, and RetroInk reconciles the catalog entry instead of treating it as a new, unread book.
 
 ## Custom Shelves
 
 Beyond the built-in To Read/Reading/Finished/Favorites categories, you can now create your own named shelves and sort books into them however you like, a reading queue for a book club, a "borrowed" shelf, whatever makes sense for your library. Create and manage them from the web file transfer portal's new **Library** tab, drag and drop books between shelves (works with touch too), or from the device itself.
+
+<img class="doc-screenshot" src="./images/web-portal-smart-shelves.png" alt="Web portal Library tab, Smart Shelves view, showing the To Read and Reading shelves" />
+
+<img class="doc-screenshot" src="./images/web-portal-your-shelves.png" alt="Web portal Library tab, Your Shelves view, showing an Unassigned shelf and a custom shelf" />
 
 On the device, Library browsing is a redesign from the ground up: books are drawn as spines standing on a shelf, and the front buttons map the way you'd actually browse a physical shelf. Left and Right page through the books on the current shelf; Up and Down switch straight to the next or previous shelf, built in or custom, no menu in the way. Pull up Actions and set whichever shelf you're looking at as the one Library opens to by default.
 

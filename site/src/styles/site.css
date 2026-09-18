@@ -610,22 +610,13 @@ pre code {
   color: var(--accent-strong);
 }
 
-.feature-screenshot {
-  margin: 0 0 32px;
-  text-align: center;
-}
-
-.feature-screenshot img {
-  max-width: min(100%, 320px);
+.doc-screenshot {
+  display: block;
+  max-width: min(100%, 640px);
+  margin: 20px auto;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--panel);
-}
-
-.feature-screenshot figcaption {
-  margin-top: 10px;
-  color: var(--muted);
-  font-size: 0.9em;
 }
 
 .device-row {
