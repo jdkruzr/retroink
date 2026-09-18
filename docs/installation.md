@@ -5,34 +5,29 @@ nav_order: 2
 
 # Installation
 
-RetroInk doesn't have a hosted web flash tool or a releases page yet. It's
-a personal fork, built from source. This covers the two ways to get it onto
-your device: build it yourself, or flash a `.bin` someone already built.
+Grab a prebuilt `.bin` from the [Releases
+page](https://github.com/smashedllama/retroink/releases) and use one of the
+install methods below, easiest first. Building from source is only needed if
+you want to modify the code yourself.
 
 ## Supported Devices
 
 - Xteink X3, X4
 - Seeed Studio Sticky
 
-## Build from source
+## Install via the web flash tool (easiest)
 
-You'll need [PlatformIO](https://platformio.org/) (the `pio` CLI).
-
-```sh
-git clone https://github.com/smashedllama/retroink.git
-cd retroink
-pio run -e default
-```
-
-The built firmware lands at `.pio/build/default/firmware-x3-x4.bin`. That's
-the file the two install methods below both want.
+No software to install. Connect your device with USB-C, then go to
+[crosspointreader.com/#flash-tools](https://crosspointreader.com/#flash-tools)
+in Chrome or Edge, pick the `.bin` you downloaded, and follow the on-page
+steps.
 
 ## Install via SD card
 
 Works even on USB-locked devices, and doesn't need a computer connected to
 the reader.
 
-1. Copy `firmware-x3-x4.bin` onto your SD card, anywhere on it.
+1. Copy the `.bin` onto your SD card, anywhere on it.
 2. On the device, go to **Settings > System > SD Card Firmware Update**.
 3. Navigate to the `.bin` file and confirm the update.
 
@@ -67,6 +62,19 @@ esptool.py --chip esp32c3 --port /dev/cu.usbmodem2101 --baud 921600 write_flash 
 ```
 
 Replace the port and firmware path with your actual values.
+
+## Build from source
+
+You'll need [PlatformIO](https://platformio.org/) (the `pio` CLI).
+
+```sh
+git clone https://github.com/smashedllama/retroink.git
+cd retroink
+pio run -e default
+```
+
+The built firmware lands at `.pio/build/default/firmware-x3-x4.bin`. Use it
+with any of the install methods above.
 
 ## After installing
 
