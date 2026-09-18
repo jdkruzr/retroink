@@ -4,6 +4,7 @@
 #include <I18n.h>
 
 #include <algorithm>
+#include <cstdio>
 
 #include "AppVersion.h"
 #include "CrossPointSettings.h"
@@ -153,7 +154,8 @@ void RetroInkBoot::drawFunnySleepScreen(const GfxRenderer& renderer, const int p
 }
 
 void RetroInkBoot::drawChargingScreen(const GfxRenderer& renderer, const int pageWidth, const int pageHeight,
-                                      const int batteryPercent, const int lineIndex) {
+                                      const int batteryPercent, const int lineIndex,
+                                      const int realBatteryPercent) {
   drawRetroInkDesktop(renderer, pageWidth, pageHeight);
   const int width = std::min(430, pageWidth - 40);
   constexpr int height = 270;
@@ -173,6 +175,17 @@ void RetroInkBoot::drawChargingScreen(const GfxRenderer& renderer, const int pag
   const int titleX = x + (width - titleWidth) / 2;
   renderer.fillRect(titleX - 10, y + 5, titleWidth + 20, titleHeight - 8, false);
   renderer.drawText(UI_12_FONT_ID, titleX, y + (titleHeight - renderer.getLineHeight(UI_12_FONT_ID)) / 2, title);
+
+  // Real gauge percentage, knocked out of the pinstripes on the right side
+  // of the title bar (same pattern as the Library shelf position counter).
+  char percentBuf[8];
+  snprintf(percentBuf, sizeof(percentBuf), "%d%%", std::clamp(realBatteryPercent, 0, 100));
+  const int percentWidth = renderer.getTextWidth(SMALL_FONT_ID, percentBuf, EpdFontFamily::BOLD);
+  renderer.fillRect(x + width - percentWidth - 24, y + 7, percentWidth + 16, titleHeight - 12, false);
+  renderer.drawText(SMALL_FONT_ID, x + width - percentWidth - 16,
+                    y + (titleHeight - renderer.getLineHeight(SMALL_FONT_ID)) / 2, percentBuf, true,
+                    EpdFontFamily::BOLD);
+
   renderer.drawLine(x + 4, y + titleHeight, x + width - 5, y + titleHeight);
 
   constexpr int macScale = 3;

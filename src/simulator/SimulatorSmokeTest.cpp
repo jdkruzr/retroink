@@ -622,13 +622,14 @@ class SimulatorSmokeTest {
           // steps, plus the activity's own preventAutoSleep() contract that
           // main.cpp's USB-plug guard relies on to keep the screen up.
           renderer.clearScreen();
-          RetroInkBoot::drawChargingScreen(renderer, renderer.getScreenWidth(), renderer.getScreenHeight(), 0, 0);
+          RetroInkBoot::drawChargingScreen(renderer, renderer.getScreenWidth(), renderer.getScreenHeight(), 0, 0, 12);
           captureFrameUnlocked("Charging empty");
           renderer.clearScreen();
-          RetroInkBoot::drawChargingScreen(renderer, renderer.getScreenWidth(), renderer.getScreenHeight(), 57, 1);
+          RetroInkBoot::drawChargingScreen(renderer, renderer.getScreenWidth(), renderer.getScreenHeight(), 57, 1, 57);
           captureFrameUnlocked("Charging mid");
           renderer.clearScreen();
-          RetroInkBoot::drawChargingScreen(renderer, renderer.getScreenWidth(), renderer.getScreenHeight(), 100, 2);
+          RetroInkBoot::drawChargingScreen(renderer, renderer.getScreenWidth(), renderer.getScreenHeight(), 100, 2,
+                                           100);
           captureFrameUnlocked("Charging full");
           {
             ChargingActivity chargingCheck(renderer, mappedInputManager);

@@ -1168,6 +1168,7 @@ void loop() {
 
   // Check for any user activity (button press or release) or active background work
   static unsigned long lastActivityTime = millis();
+  static bool chargingScreenShownThisConnection = false;
   const bool focusActive = activityManager.isCurrentActivityNamed("FocusSession");
   const bool buttonActivity = gpio.wasAnyPressed() || gpio.wasAnyReleased();
   if (buttonActivity
@@ -1250,15 +1251,30 @@ void loop() {
   if (gpio.wasUsbStateChanged()) {
     activityManager.requestUpdate();
   }
+  if (!gpio.isUsbConnected()) {
+    // Unplugged: let the next physical plug-in show the charging screen again.
+    chargingScreenShownThisConnection = false;
+  }
 
-  // Just plugged in while awake, not reading or mid-focus-session, and not
-  // already showing the charging screen: switch to it. It sets
-  // preventAutoSleep(), so it stays up until unplugged or a button is
+  // Plugged in, awake, not reading or mid-focus-session, and we haven't
+  // already shown the charging screen for this connection: switch to it. It
+  // sets preventAutoSleep(), so it stays up until unplugged or a button is
   // pressed (see ChargingActivity::loop()) instead of racing the inactivity
   // timeout above.
-  if (gpio.wasUsbStateChanged() && gpio.isUsbConnected() && SETTINGS.chargingScreenEnabled &&
+  //
+  // Level-checked against the "shown" flag rather than gated on
+  // wasUsbStateChanged(): on X3, isUsbConnected() reads the battery gauge's
+  // charge current (there's no USB-detect pin), which can take a moment to
+  // settle, so the actual transition doesn't always land on the same loop()
+  // tick as this check. Requiring that exact edge meant a settle delay could
+  // silently and permanently miss the trigger for an entire connection. The
+  // flag (reset above on disconnect) gets the same "once per plug-in, and
+  // dismissing it doesn't immediately reshow it" behavior without depending
+  // on catching one specific tick.
+  if (gpio.isUsbConnected() && !chargingScreenShownThisConnection && SETTINGS.chargingScreenEnabled &&
       !activityManager.isReaderActivity() && !activityManager.isCurrentActivityNamed("FocusSession") &&
       !activityManager.isCurrentActivityNamed("Charging")) {
+    chargingScreenShownThisConnection = true;
     activityManager.replaceActivity(std::make_unique<ChargingActivity>(renderer, mappedInputManager));
     lastActivityTime = millis();
     return;

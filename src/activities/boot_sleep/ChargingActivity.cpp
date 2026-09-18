@@ -5,6 +5,7 @@
 
 #include "BootActivity.h"
 #include "HalGPIO.h"
+#include "HalPowerManager.h"
 #include "MappedInputManager.h"
 
 namespace {
@@ -45,8 +46,9 @@ void ChargingActivity::render(RenderLock&&) {
   renderer.clearScreen();
   const int batteryPercent = static_cast<int>((redrawCount_ % kFillCycleSteps) * 100U / (kFillCycleSteps - 1));
   const int lineIndex = static_cast<int>(redrawCount_ / kFillCycleSteps);
+  const int realBatteryPercent = static_cast<int>(powerManager.getBatteryPercentage());
   RetroInkBoot::drawChargingScreen(renderer, renderer.getScreenWidth(), renderer.getScreenHeight(), batteryPercent,
-                                   lineIndex);
+                                   lineIndex, realBatteryPercent);
   lastDrawMs_ = millis();
   const bool fullRefresh = redrawCount_ % kFullRefreshEvery == 0;
   renderer.displayBuffer(fullRefresh ? HalDisplay::FULL_REFRESH : HalDisplay::FAST_REFRESH);
