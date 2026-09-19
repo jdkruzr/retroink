@@ -558,6 +558,8 @@ void SleepActivity::onEnter() {
       return renderMinimalSleepScreen();
     case (CrossPointSettings::SLEEP_SCREEN_MODE::MINIMAL_STATS_SLEEP):
       return renderMinimalStatsSleepScreen();
+    case (CrossPointSettings::SLEEP_SCREEN_MODE::BOOK_WEEK_STATS_SLEEP):
+      return renderBookWeekStatsSleepScreen();
     case (CrossPointSettings::SLEEP_SCREEN_MODE::DASHBOARD_SLEEP):
       return renderDashboardSleepScreen();
     case (CrossPointSettings::SLEEP_SCREEN_MODE::RETROINK_ERROR_404_SLEEP):
@@ -853,6 +855,30 @@ void SleepActivity::renderMinimalStatsSleepScreen() const {
   MinimalTheme theme;
   theme.drawStatsSleepScreen(renderer, book, &bookStats, &globalStats, progressPercent,
                              sleepCoverFilterInvertsGeneratedScreen());
+  renderer.displayBuffer(sleepRefreshMode(), TURN_OFF_SCREEN_AFTER_SLEEP_REFRESH);
+}
+
+void SleepActivity::renderBookWeekStatsSleepScreen() const {
+  const std::string& path = currentBookPath.empty() ? APP_STATE.openEpubPath : currentBookPath;
+  if (path.empty()) {
+    return renderDefaultSleepScreen();
+  }
+
+  // This screen's cover-plus-weekly-bar-chart layout is a System6-specific
+  // design; other themes fall back to the closest existing equivalent
+  // (per-book stats with a cover) rather than leaving this option blank.
+  if (SETTINGS.uiTheme != CrossPointSettings::SYSTEM6) {
+    return renderMinimalStatsSleepScreen();
+  }
+
+  RecentBook book = recentBookForPath(path);
+  book.coverBmpPath = SleepCoverAssets::cachedBookWeekCoverPathFor(path);
+  if (book.coverBmpPath.empty() && SleepCoverAssets::prepareBookWeekCoverForPath(path, &renderer)) {
+    book.coverBmpPath = SleepCoverAssets::cachedBookWeekCoverPathFor(path);
+  }
+
+  const BookReadingStats bookStats = loadBookStatsForPath(path);
+  RetroInkReadingDeskView::renderBookWeekStatus(renderer, nullptr, book.title, bookStats, book.coverBmpPath);
   renderer.displayBuffer(sleepRefreshMode(), TURN_OFF_SCREEN_AFTER_SLEEP_REFRESH);
 }
 

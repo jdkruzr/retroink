@@ -340,7 +340,7 @@ inline SettingInfo buildSleepScreenSetting() {
   SettingInfo s = SettingInfo::Enum(
       StrId::STR_SLEEP_SCREEN, &CrossPointSettings::sleepScreen,
       {StrId::STR_RETROINK_REST, StrId::STR_CUSTOM, StrId::STR_COVER, StrId::STR_PAGE_OVERLAY,
-       StrId::STR_TODAY, StrId::STR_BOOK_STATUS, StrId::STR_READING_YEAR,
+       StrId::STR_TODAY, StrId::STR_BOOK_STATUS, StrId::STR_BOOK_WEEK_STATS, StrId::STR_READING_YEAR,
        StrId::STR_SLEEP_ERROR_404, StrId::STR_SLEEP_INSERT_BOOKMARK, StrId::STR_SLEEP_SYSTEM_NAP,
        StrId::STR_QUICK_RESUME},
       "sleepScreen", StrId::STR_CAT_DISPLAY);
@@ -351,6 +351,7 @@ inline SettingInfo buildSleepScreenSetting() {
       static_cast<uint8_t>(CrossPointSettings::OVERLAY),
       static_cast<uint8_t>(CrossPointSettings::READING_STATS_SLEEP),
       static_cast<uint8_t>(CrossPointSettings::MINIMAL_STATS_SLEEP),
+      static_cast<uint8_t>(CrossPointSettings::BOOK_WEEK_STATS_SLEEP),
       static_cast<uint8_t>(CrossPointSettings::DASHBOARD_SLEEP),
       static_cast<uint8_t>(CrossPointSettings::RETROINK_ERROR_404_SLEEP),
       static_cast<uint8_t>(CrossPointSettings::RETROINK_INSERT_BOOKMARK_SLEEP),

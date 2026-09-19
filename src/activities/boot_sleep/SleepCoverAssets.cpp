@@ -19,6 +19,10 @@ constexpr int kMinimalSleepCoverHeight = MinimalMetrics::homeCoverImageHeight;
 constexpr int kMinimalSleepCoverWidth = MinimalMetrics::homeCoverImageWidth;
 constexpr int kDashboardSleepCoverHeight = DashboardMetrics::homeCoverImageHeight;
 constexpr int kDashboardSleepCoverWidth = DashboardMetrics::homeCoverImageWidth;
+// A small thumbnail alongside the title and weekly bar chart, not a
+// full-width cover -- see RetroInkReadingDeskView::renderBookWeekStatus.
+constexpr int kBookWeekCoverWidth = 110;
+constexpr int kBookWeekCoverHeight = 160;
 
 bool shouldPrepareFullCover() {
   return SETTINGS.sleepScreen == CrossPointSettings::SLEEP_SCREEN_MODE::COVER ||
@@ -32,6 +36,10 @@ bool shouldPrepareMinimalCover() {
 
 bool shouldPrepareDashboardCover() {
   return SETTINGS.sleepScreen == CrossPointSettings::SLEEP_SCREEN_MODE::DASHBOARD_SLEEP;
+}
+
+bool shouldPrepareBookWeekCover() {
+  return SETTINGS.sleepScreen == CrossPointSettings::SLEEP_SCREEN_MODE::BOOK_WEEK_STATS_SLEEP;
 }
 
 bool fileExists(const std::string& path) { return !path.empty() && Storage.exists(path.c_str()); }
@@ -57,11 +65,17 @@ bool prepareXtc(const Xtc& xtc) {
                                    static_cast<uint16_t>(kDashboardSleepCoverHeight)) &&
               success;
   }
+  if (shouldPrepareBookWeekCover()) {
+    success = xtc.generateThumbBmp(static_cast<uint16_t>(kBookWeekCoverWidth),
+                                   static_cast<uint16_t>(kBookWeekCoverHeight)) &&
+              success;
+  }
   return success;
 }
 
 bool prepareTxt(const Txt& txt) {
-  if (!shouldPrepareFullCover() && !shouldPrepareMinimalCover() && !shouldPrepareDashboardCover()) {
+  if (!shouldPrepareFullCover() && !shouldPrepareMinimalCover() && !shouldPrepareDashboardCover() &&
+      !shouldPrepareBookWeekCover()) {
     return true;
   }
   return txt.generateCoverBmp();
@@ -149,6 +163,34 @@ bool prepareDashboardCoverForPath(const std::string& bookPath, const GfxRenderer
   return false;
 }
 
+bool prepareBookWeekCoverForPath(const std::string& bookPath, const GfxRenderer* renderer) {
+  if (bookPath.empty()) {
+    return false;
+  }
+
+  if (FsHelpers::hasEpubExtension(bookPath)) {
+    Epub epub(bookPath, "/.crosspoint");
+    if (!epub.load(/*buildIfMissing=*/true, /*skipLoadingCss=*/true, Epub::XLocationLoadMode::Skip)) {
+      return false;
+    }
+    return epub.generateAdaptiveThumbBmp(kBookWeekCoverWidth, kBookWeekCoverHeight, renderer,
+                                         readerFontIdForRenderer(renderer));
+  }
+  if (FsHelpers::hasXtcExtension(bookPath)) {
+    Xtc xtc(bookPath, "/.crosspoint");
+    if (!xtc.load()) {
+      return false;
+    }
+    return xtc.generateThumbBmp(static_cast<uint16_t>(kBookWeekCoverWidth),
+                                static_cast<uint16_t>(kBookWeekCoverHeight));
+  }
+  if (FsHelpers::hasTxtExtension(bookPath) || FsHelpers::hasMarkdownExtension(bookPath)) {
+    Txt txt(bookPath, "/.crosspoint");
+    return txt.generateCoverBmp();
+  }
+  return false;
+}
+
 std::string reusableCoverPathFor(const std::string& bookPath) {
   if (FsHelpers::hasEpubExtension(bookPath)) {
     return Epub(bookPath, "/.crosspoint").getThumbBmpPath();
@@ -198,6 +240,18 @@ std::string cachedDashboardCoverPathFor(const std::string& bookPath) {
   const std::string reusablePath = reusableCoverPathFor(bookPath);
   const std::string coverPath =
       UITheme::getCoverThumbPath(reusablePath, kDashboardSleepCoverWidth, kDashboardSleepCoverHeight);
+  return fileExists(coverPath) ? reusablePath : std::string{};
+}
+
+std::string cachedBookWeekCoverPathFor(const std::string& bookPath) {
+  if (FsHelpers::hasEpubExtension(bookPath)) {
+    const Epub epub(bookPath, "/.crosspoint");
+    const std::string coverPath = epub.getAdaptiveThumbBmpPath(kBookWeekCoverWidth, kBookWeekCoverHeight);
+    return fileExists(coverPath) ? epub.getThumbBmpPath() : std::string{};
+  }
+
+  const std::string reusablePath = reusableCoverPathFor(bookPath);
+  const std::string coverPath = UITheme::getCoverThumbPath(reusablePath, kBookWeekCoverWidth, kBookWeekCoverHeight);
   return fileExists(coverPath) ? reusablePath : std::string{};
 }
 

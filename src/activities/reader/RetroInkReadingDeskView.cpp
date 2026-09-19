@@ -1,14 +1,17 @@
 #include "RetroInkReadingDeskView.h"
 
 #include <GfxRenderer.h>
+#include <HalStorage.h>
 #include <I18n.h>
 
 #include <algorithm>
+#include <array>
 #include <cstdio>
 
 #include "CrossPointSettings.h"
 #include "MappedInputManager.h"
 #include "ReadingDeskStore.h"
+#include "ReadingStatsUtils.h"
 #include "components/CompactHeader.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -210,6 +213,83 @@ void renderBookStatus(GfxRenderer& r, const MappedInputManager* input, const std
   if (estimatedTimeLeftSeconds) {
     BookReadingStats::formatDuration(estimatedTimeLeftSeconds, value, sizeof(value));
     r.drawCenteredText(UI_10_FONT_ID, statsTop + 205, value);
+  }
+  footer(r, input, tr(STR_BACK), tr(STR_ACTIONS));
+}
+
+void renderBookWeekStatus(GfxRenderer& r, const MappedInputManager* input, const std::string& title,
+                          const BookReadingStats& stats, const std::string& coverBmpPath) {
+  r.clearScreen();
+  CompactHeader::drawTitle(r, tr(STR_BOOK_STATUS));
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  const int x = metrics.contentSidePadding;
+  const int w = r.getScreenWidth() - x * 2;
+  const int top = metrics.topPadding + metrics.headerHeight + 10;
+  const int bottom = r.getScreenHeight() - metrics.buttonHintsHeight - 12;
+
+  // Cover + title window.
+  constexpr int coverW = 110;
+  constexpr int coverH = 160;
+  constexpr int coverPad = 14;
+  const int headerH = coverH + coverPad * 2 + 24;
+  window(r, x, top, w, headerH, tr(STR_BOOK_STATUS));
+  const int coverX = x + coverPad;
+  const int coverY = top + 30 + coverPad;
+  bool coverDrawn = false;
+  if (!coverBmpPath.empty()) {
+    FsFile file;
+    if (Storage.openFileForRead("RDV", coverBmpPath, file)) {
+      Bitmap bitmap(file);
+      if (bitmap.parseHeaders() == BmpReaderError::Ok) {
+        r.drawRect(coverX - 1, coverY - 1, coverW + 2, coverH + 2);
+        r.drawBitmap(bitmap, coverX, coverY, coverW, coverH);
+        coverDrawn = true;
+      }
+    }
+  }
+  if (!coverDrawn) {
+    r.drawRect(coverX, coverY, coverW, coverH);
+    dither(r, coverX + 2, coverY + 2, coverW - 4, coverH - 4);
+  }
+  const int textX = coverX + coverW + 16;
+  const int textW = std::max(20, x + w - coverPad - textX);
+  const int titleLineHeight = r.getLineHeight(UI_10_FONT_ID);
+  const int maxTitleLines = std::max(1, coverH / titleLineHeight);
+  const auto titleLines = r.wrappedText(UI_10_FONT_ID, title.c_str(), textW, maxTitleLines, EpdFontFamily::BOLD);
+  int textY = coverY + std::max(0, (coverH - static_cast<int>(titleLines.size()) * titleLineHeight) / 2);
+  for (const auto& line : titleLines) {
+    r.drawText(UI_10_FONT_ID, textX, textY, line.c_str(), true, EpdFontFamily::BOLD);
+    textY += titleLineHeight;
+  }
+
+  // "This Week" bar chart: cumulative reading time per weekday for this book.
+  const int weekTop = top + headerH + 14;
+  const int weekH = bottom - weekTop;
+  window(r, x, weekTop, w, weekH, tr(STR_STATS_DAY_OF_WEEK));
+  constexpr std::array<StrId, READING_DAY_OF_WEEK_COUNT> DAY_LABELS = {
+      StrId::STR_STATS_MON, StrId::STR_STATS_TUE, StrId::STR_STATS_WED, StrId::STR_STATS_THU,
+      StrId::STR_STATS_FRI, StrId::STR_STATS_SAT, StrId::STR_STATS_SUN};
+  const uint32_t maxSeconds =
+      *std::max_element(stats.dayOfWeekSeconds.begin(), stats.dayOfWeekSeconds.end());
+  const int labelHeight = r.getLineHeight(UI_10_FONT_ID);
+  const int chartTop = weekTop + 40;
+  const int chartBottom = weekTop + weekH - labelHeight - 12;
+  const int chartHeight = std::max(10, chartBottom - chartTop);
+  constexpr int barGap = 10;
+  const int barAreaW = w - 32;
+  const int barW = (barAreaW - barGap * (static_cast<int>(READING_DAY_OF_WEEK_COUNT) - 1)) /
+                   static_cast<int>(READING_DAY_OF_WEEK_COUNT);
+  for (size_t i = 0; i < READING_DAY_OF_WEEK_COUNT; ++i) {
+    const int bx = x + 16 + static_cast<int>(i) * (barW + barGap);
+    const int barHeight = maxSeconds > 0 ? static_cast<int>((static_cast<uint64_t>(stats.dayOfWeekSeconds[i]) *
+                                                             static_cast<uint64_t>(chartHeight)) /
+                                                            maxSeconds)
+                                         : 0;
+    r.drawRect(bx, chartTop, barW, chartHeight);
+    if (barHeight > 0) r.fillRect(bx, chartBottom - barHeight, barW, barHeight);
+    const char* label = I18N.get(DAY_LABELS[i]);
+    const int labelW = r.getTextWidth(UI_10_FONT_ID, label);
+    r.drawText(UI_10_FONT_ID, bx + (barW - labelW) / 2, chartBottom + 8, label);
   }
   footer(r, input, tr(STR_BACK), tr(STR_ACTIONS));
 }
