@@ -25,10 +25,16 @@ class RetroInkLibraryCatalog {
     char author[112] = {};
     uint64_t size = 0;
     uint64_t fingerprint = 0;
+    // FAT-packed last-modified date/time, captured from the directory entry
+    // during the scan walk. When both match the prior scan's values for this
+    // path, the file is assumed unchanged without re-reading it to recompute
+    // fingerprint -- see RetroInkLibraryCatalog::metadataFor.
+    uint16_t mtimeDate = 0;
+    uint16_t mtimeTime = 0;
     uint32_t recentRank = UINT32_MAX;
     uint8_t flags = 0;  // bit 0 activity, bit 1 finished, bit 2 favorite
   };
-  static_assert(sizeof(Record) == 872, "Bump Library catalog version if record layout changes");
+  static_assert(sizeof(Record) == 880, "Bump Library catalog version if record layout changes");
 
  private:
   struct Frame {
@@ -37,7 +43,7 @@ class RetroInkLibraryCatalog {
     uint32_t entryNo = 0;
   };
   static constexpr uint32_t kMagic = 0x52494c42;  // RILB
-  static constexpr uint16_t kVersion = 1;
+  static constexpr uint16_t kVersion = 2;  // v2: added Record::mtimeDate/mtimeTime
   static constexpr uint32_t kMaxBooks = 4096;
   std::vector<Frame> frames_;
   FsFile scanFile_;
@@ -62,7 +68,8 @@ class RetroInkLibraryCatalog {
   bool writeRecord(const Record& record);
   bool openComplete();
   bool sortAndWriteIndex(Sort sort, Shelf shelf, const char* output);
-  bool metadataFor(const std::string& path, Record& record);
+  bool metadataFor(const std::string& path, uint64_t sizeHint, uint16_t mtimeDate, uint16_t mtimeTime,
+                   Record& record);
   bool appendOrphan(const Record& record);
   bool preserveOrphans();
   bool scanLegacyHeaders(const char* directory, bool bookmarks);

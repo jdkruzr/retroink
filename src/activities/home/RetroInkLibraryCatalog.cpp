@@ -239,16 +239,39 @@ bool RetroInkLibraryCatalog::findMoveSource(const std::string& path, std::string
   hints.close(); return false;
 }
 
-bool RetroInkLibraryCatalog::metadataFor(const std::string& path, Record& record) {
+bool RetroInkLibraryCatalog::metadataFor(const std::string& path, const uint64_t sizeHint, const uint16_t mtimeDate,
+                                         const uint16_t mtimeTime, Record& record) {
   record = Record{};
   if (path.size() >= sizeof(record.path)) {
     LOG_ERR("Library", "Book path too long for catalog: %s", path.c_str());
     return false;
   }
   copyText(record.path, path);
-  record.fingerprint = fingerprintFor(path, record.size);
-  if (!record.fingerprint) return false;
-  const bool unchanged = findOldRecord(path.c_str(), scratchB_) && scratchB_.fingerprint == record.fingerprint;
+  record.size = sizeHint;
+  record.mtimeDate = mtimeDate;
+  record.mtimeTime = mtimeTime;
+
+  const bool haveOld = findOldRecord(path.c_str(), scratchB_);
+  // A real FAT timestamp is never all-zero, so an all-zero reading (no RTC,
+  // or the wrapper couldn't read it) is treated as "unknown" rather than
+  // risking two different timestamp-less files being mistaken for a match.
+  const bool mtimeKnown = mtimeDate != 0 || mtimeTime != 0;
+  const bool cheapUnchanged = haveOld && mtimeKnown && scratchB_.size == sizeHint &&
+                              scratchB_.mtimeDate == mtimeDate && scratchB_.mtimeTime == mtimeTime;
+  bool unchanged;
+  if (cheapUnchanged) {
+    // Same size and modification time as the last scan: skip opening the
+    // file a second time just to hash it, and trust the content hasn't
+    // changed. This is the common case on every scan after the first, and
+    // is what makes adding one book to a large library fast again.
+    record.fingerprint = scratchB_.fingerprint;
+    unchanged = true;
+  } else {
+    uint64_t hashedSize = 0;
+    record.fingerprint = fingerprintFor(path, hashedSize);
+    if (!record.fingerprint) return false;
+    unchanged = haveOld && scratchB_.fingerprint == record.fingerprint;
+  }
   if (unchanged) {
     memcpy(record.title, scratchB_.title, sizeof(record.title));
     memcpy(record.author, scratchB_.author, sizeof(record.author));
@@ -493,7 +516,14 @@ bool RetroInkLibraryCatalog::stepScan() {
   }
   ++frame.entryNo;
   char name[256]; child.getName(name, sizeof(name));
-  const bool dir = child.isDirectory(); child.close();
+  const bool dir = child.isDirectory();
+  // Captured from the walk's own open handle -- the directory entry is
+  // already in memory here, so this costs nothing extra. Passed through to
+  // metadataFor so it can skip a second open+read when nothing changed.
+  const uint64_t sizeHint = child.fileSize64();
+  uint16_t mtimeDate = 0, mtimeTime = 0;
+  child.getLastWriteTime(mtimeDate, mtimeTime);
+  child.close();
   if (name[0] == '.' || strcmp(name, "") == 0) return true;
   const std::string path = frame.path == "/" ? std::string("/") + name : frame.path + "/" + name;
   currentPath_ = path;
@@ -504,7 +534,7 @@ bool RetroInkLibraryCatalog::stepScan() {
     if (!nested || !nested.isDirectory()) { failed_ = true; return false; }
     frames_.push_back(Frame{path, std::move(nested), 0});
   } else if (supported(path.c_str())) {
-    if (!metadataFor(path, scratchA_) || !writeRecord(scratchA_)) {
+    if (!metadataFor(path, sizeHint, mtimeDate, mtimeTime, scratchA_) || !writeRecord(scratchA_)) {
       failed_ = true; LOG_ERR("Library", "Scan paused at %s", path.c_str()); return false;
     }
   }

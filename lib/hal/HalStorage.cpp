@@ -373,6 +373,12 @@ size_t HalFile::write(uint8_t b) { HAL_FILE_WRAPPED_CALL(write, b); }
 bool HalFile::sync() { HAL_FILE_WRAPPED_CALL(sync, ); }
 bool HalFile::rename(const char* newPath) { HAL_FILE_WRAPPED_CALL(rename, newPath); }
 bool HalFile::isDirectory() const { HAL_FILE_FORWARD_CALL(isDirectory, ); }  // already thread-safe, no need to wrap
+// Reads from the already-open file's cached directory entry, same as
+// fileSize()/isDirectory() above -- no new SD transaction, no lock needed.
+bool HalFile::getLastWriteTime(uint16_t& date, uint16_t& time) const {
+  assert(impl != nullptr);
+  return impl->file.getModifyDateTime(&date, &time);
+}
 void HalFile::rewindDirectory() { HAL_FILE_WRAPPED_CALL(rewindDirectory, ); }
 bool HalFile::close() {
   if (!impl) return true;

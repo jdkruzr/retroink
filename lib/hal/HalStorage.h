@@ -91,6 +91,10 @@ class HalFile : public Print {
   size_t size();
   size_t fileSize();
   uint64_t fileSize64();
+  // FAT-packed last-modified date/time (same format FsFile stores on disk).
+  // Returns false if unavailable; callers should fall back to a
+  // content-based check rather than treating that as "unchanged".
+  bool getLastWriteTime(uint16_t& date, uint16_t& time) const;
   bool seek(size_t pos);
   bool seek64(uint64_t pos);
   bool seekCur(int64_t offset);
