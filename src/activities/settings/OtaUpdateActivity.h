@@ -1,11 +1,18 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "I18nKeys.h"
 #include "activities/Activity.h"
 #include "activities/ScreenTransitionRefresh.h"
 #include "network/OtaUpdater.h"
 
 class OtaUpdateActivity : public Activity {
+  struct ChangelogLine {
+    std::string text;
+    bool bold = false;
+  };
   enum State {
     WIFI_SELECTION,
     CHECKING_FOR_UPDATE,
@@ -25,9 +32,15 @@ class OtaUpdateActivity : public Activity {
   unsigned int lastUpdaterPercentage = UNINITIALIZED_PERCENTAGE;
   StrId failureMessage = StrId::STR_UPDATE_FAILED;
   OtaUpdater updater;
+  std::vector<ChangelogLine> changelogLines;
+  int changelogVisibleLines = 0;  // computed on first render, once layout is known
+  int changelogScrollLine = 0;
 
   void onWifiSelectionComplete(bool success);
   void runUpdateInstall();
+  void buildChangelogLines(int maxWidth);
+  void scrollChangelog(int delta);
+  void changelogGeometry(int& top, int& bottom, int& lineHeight) const;
 
  public:
   explicit OtaUpdateActivity(GfxRenderer& renderer, MappedInputManager& mappedInput)

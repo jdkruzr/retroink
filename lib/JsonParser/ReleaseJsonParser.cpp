@@ -41,6 +41,7 @@ void ReleaseJsonParser::reset() {
   firmwareSize = 0;
   tagFound = false;
   firmwareFound = false;
+  releaseBody[0] = '\0';
   currentAssetName[0] = '\0';
   currentAssetUrl[0] = '\0';
   currentAssetSha256[0] = '\0';
@@ -57,6 +58,7 @@ const char* ReleaseJsonParser::getTagName() const { return tagName; }
 const char* ReleaseJsonParser::getFirmwareUrl() const { return firmwareUrl; }
 size_t ReleaseJsonParser::getFirmwareSize() const { return firmwareSize; }
 const char* ReleaseJsonParser::getFirmwareSha256() const { return firmwareSha256; }
+const char* ReleaseJsonParser::getReleaseBody() const { return releaseBody; }
 
 void ReleaseJsonParser::commitAsset() {
   const bool matchesFirmware =
@@ -85,6 +87,8 @@ void ReleaseJsonParser::sOnKey(void* ctx, const char* key, size_t len) {
           self->lastKey = LastKey::TAG_NAME;
         else if (len == 6 && memcmp(key, "assets", 6) == 0)
           self->lastKey = LastKey::ASSETS;
+        else if (len == 4 && memcmp(key, "body", 4) == 0)
+          self->lastKey = LastKey::RELEASE_BODY;
         else
           self->lastKey = LastKey::NONE;
       }
@@ -118,6 +122,11 @@ void ReleaseJsonParser::sOnString(void* ctx, const char* value, size_t len) {
       if (self->position == Position::TOP_LEVEL && self->depth == 1) {
         safeCopy(self->tagName, sizeof(self->tagName), value, len);
         self->tagFound = true;
+      }
+      break;
+    case LastKey::RELEASE_BODY:
+      if (self->position == Position::TOP_LEVEL && self->depth == 1) {
+        safeCopy(self->releaseBody, sizeof(self->releaseBody), value, len);
       }
       break;
     case LastKey::ASSET_NAME:

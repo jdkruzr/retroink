@@ -3,6 +3,7 @@
 
 bool OtaUpdater::isUpdateNewer() const { return false; }
 const std::string& OtaUpdater::getLatestVersion() const { return latestVersion; }
+const std::string& OtaUpdater::getReleaseNotes() const { return releaseNotes; }
 OtaUpdater::OtaUpdaterError OtaUpdater::checkForUpdate() { return NO_UPDATE; }
 OtaUpdater::OtaUpdaterError OtaUpdater::installUpdate(ProgressCallback, void*, std::atomic<bool>*) { return NO_UPDATE; }
 #else
@@ -223,6 +224,7 @@ OtaUpdater::OtaUpdaterError OtaUpdater::checkForUpdate() {
 
   updateAvailable = false;
   latestVersion.clear();
+  releaseNotes.clear();
   otaUrl.clear();
   otaSha256.clear();
   otaSize = 0;
@@ -284,6 +286,7 @@ OtaUpdater::OtaUpdaterError OtaUpdater::checkForUpdate() {
   }
 
   latestVersion = releaseParser.getTagName();
+  releaseNotes = releaseParser.getReleaseBody();
 
   if (!releaseParser.foundFirmware()) {
     LOG_ERR("OTA", "No matching %s asset found for release %s", firmwareAssetStem, latestVersion.c_str());
@@ -314,6 +317,7 @@ bool OtaUpdater::isUpdateNewer() const {
 }
 
 const std::string& OtaUpdater::getLatestVersion() const { return latestVersion; }
+const std::string& OtaUpdater::getReleaseNotes() const { return releaseNotes; }
 
 OtaUpdater::OtaUpdaterError OtaUpdater::installUpdate(ProgressCallback onProgress, void* ctx,
                                                       std::atomic<bool>* cancelRequested) {

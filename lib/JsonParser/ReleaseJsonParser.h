@@ -24,6 +24,7 @@ class ReleaseJsonParser {
   const char* getFirmwareUrl() const;
   size_t getFirmwareSize() const;
   const char* getFirmwareSha256() const;
+  const char* getReleaseBody() const;
 
  private:
   enum class Position : uint8_t {
@@ -41,6 +42,7 @@ class ReleaseJsonParser {
     ASSET_SIZE,
     ASSET_SHA256,
     ASSET_DIGEST,
+    RELEASE_BODY,
   };
 
   static void sOnKey(void* ctx, const char* key, size_t len);
@@ -69,6 +71,11 @@ class ReleaseJsonParser {
   size_t firmwareSize;
   bool tagFound;
   bool firmwareFound;
+  // Release notes markdown. Bounded by StreamingJsonParser::TOKEN_BUF_SIZE
+  // upstream (a longer body is dropped there, not truncated here), so keep
+  // release notes concise -- this is a changelog preview for a small
+  // e-ink screen, not the full GitHub release page.
+  char releaseBody[StreamingJsonParser::TOKEN_BUF_SIZE];
 
   char currentAssetName[96];
   char currentAssetUrl[512];

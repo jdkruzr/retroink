@@ -4,6 +4,8 @@
 #include <I18n.h>
 #include <WiFi.h>
 
+#include <algorithm>
+
 #include "AppVersion.h"
 #include "MappedInputManager.h"
 #include "SdCardFontSystem.h"
@@ -38,6 +40,69 @@ bool contains(const Rect& rect, const int x, const int y) {
   return x >= rect.x && x < rect.x + rect.width && y >= rect.y && y < rect.y + rect.height;
 }
 }  // namespace
+
+void OtaUpdateActivity::changelogGeometry(int& top, int& bottom, int& lineHeight) const {
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  const auto pageHeight = renderer.getScreenHeight();
+  lineHeight = renderer.getLineHeight(UI_10_FONT_ID);
+  const int titleTop = (pageHeight - lineHeight) / 2;
+  // Below the title, current-version, and new-version lines already drawn
+  // above this point in render().
+  top = titleTop + lineHeight * 3 + metrics.verticalSpacing * 3;
+  // getOtaActionRects() reserves 80px for the touch Cancel/Update buttons;
+  // non-touch devices use the shorter button-hints bar instead, so 80 is
+  // the larger of the two and safe for both.
+  const int footerReserve = std::max(80, static_cast<int>(metrics.buttonHintsHeight)) + 10;
+  bottom = pageHeight - footerReserve;
+}
+
+void OtaUpdateActivity::buildChangelogLines(const int maxWidth) {
+  changelogLines.clear();
+  changelogScrollLine = 0;
+
+  const std::string& body = updater.getReleaseNotes();
+  if (body.empty()) {
+    changelogVisibleLines = 0;
+    return;
+  }
+
+  size_t pos = 0;
+  while (pos <= body.size()) {
+    const size_t nl = body.find('\n', pos);
+    std::string line = body.substr(pos, nl == std::string::npos ? std::string::npos : nl - pos);
+    pos = (nl == std::string::npos) ? body.size() + 1 : nl + 1;
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+
+    // Minimal markdown: a leading run of '#' marks a bold section header
+    // (as written in GitHub release notes, e.g. "## Fixed"); everything
+    // else (including "- " bullet lines) is shown as plain wrapped text.
+    size_t start = 0;
+    while (start < line.size() && line[start] == '#') start++;
+    const bool bold = start > 0;
+    while (start < line.size() && line[start] == ' ') start++;
+    line = line.substr(start);
+
+    if (line.empty()) {
+      changelogLines.push_back({"", false});
+      continue;
+    }
+    const auto wrapped = renderer.wrappedText(UI_10_FONT_ID, line.c_str(), maxWidth, 100,
+                                              bold ? EpdFontFamily::BOLD : EpdFontFamily::REGULAR);
+    for (const auto& w : wrapped) changelogLines.push_back({w, bold});
+  }
+
+  int top = 0, bottom = 0, lineHeight = 1;
+  changelogGeometry(top, bottom, lineHeight);
+  changelogVisibleLines = std::max(1, (bottom - top) / std::max(1, lineHeight));
+}
+
+void OtaUpdateActivity::scrollChangelog(const int delta) {
+  const int maxScroll = std::max(0, static_cast<int>(changelogLines.size()) - changelogVisibleLines);
+  const int next = std::clamp(changelogScrollLine + delta, 0, maxScroll);
+  if (next == changelogScrollLine) return;
+  changelogScrollLine = next;
+  requestUpdate();
+}
 
 void OtaUpdateActivity::onWifiSelectionComplete(const bool success) {
   if (!success) {
@@ -80,6 +145,9 @@ void OtaUpdateActivity::onWifiSelectionComplete(const bool success) {
     requestUpdate(true);
     return;
   }
+
+  const auto& metrics = UITheme::getInstance().getMetrics();
+  buildChangelogLines(renderer.getScreenWidth() - metrics.contentSidePadding * 2);
 
   {
     RenderLock lock(*this);
@@ -155,6 +223,21 @@ void OtaUpdateActivity::render(RenderLock&&) {
     renderer.drawText(UI_10_FONT_ID, metrics.contentSidePadding, top + height * 2 + metrics.verticalSpacing * 2,
                       (std::string(tr(STR_NEW_VERSION)) + updater.getLatestVersion()).c_str());
 
+    if (!changelogLines.empty()) {
+      int changelogTop = 0, changelogBottom = 0, changelogLineHeight = 1;
+      changelogGeometry(changelogTop, changelogBottom, changelogLineHeight);
+      const int lastLine = std::min(static_cast<int>(changelogLines.size()), changelogScrollLine + changelogVisibleLines);
+      int y = changelogTop;
+      for (int i = changelogScrollLine; i < lastLine; ++i) {
+        const auto& line = changelogLines[i];
+        if (!line.text.empty()) {
+          renderer.drawText(UI_10_FONT_ID, metrics.contentSidePadding, y, line.text.c_str(), true,
+                            line.bold ? EpdFontFamily::BOLD : EpdFontFamily::REGULAR);
+        }
+        y += changelogLineHeight;
+      }
+    }
+
     if (mappedInput.hasTouch()) {
       const auto actionRects = getOtaActionRects(renderer);
       const int cancelTextWidth = renderer.getTextWidth(UI_10_FONT_ID, tr(STR_CANCEL));
@@ -165,7 +248,10 @@ void OtaUpdateActivity::render(RenderLock&&) {
                         actionRects.update.y + 28, tr(STR_UPDATE));
     }
 
-    const auto labels = mappedInput.mapLabels(tr(STR_CANCEL), tr(STR_UPDATE), "", "");
+    const bool changelogScrollable = static_cast<int>(changelogLines.size()) > changelogVisibleLines;
+    const auto labels = mappedInput.mapLabels(tr(STR_CANCEL), tr(STR_UPDATE),
+                                              changelogScrollable ? tr(STR_DIR_UP) : "",
+                                              changelogScrollable ? tr(STR_DIR_DOWN) : "");
     GUI.drawButtonHints(renderer, labels.btn1, labels.btn2, labels.btn3, labels.btn4);
   } else if (state == UPDATE_IN_PROGRESS) {
     renderer.drawCenteredText(UI_10_FONT_ID, top, tr(STR_UPDATING));
@@ -276,6 +362,13 @@ void OtaUpdateActivity::loop() {
     if (mappedInput.wasReleased(MappedInputManager::Button::Confirm)) {
       runUpdateInstall();
       return;
+    }
+
+    if (mappedInput.wasReleased(MappedInputManager::Button::Up)) {
+      scrollChangelog(-1);
+    }
+    if (mappedInput.wasReleased(MappedInputManager::Button::Down)) {
+      scrollChangelog(1);
     }
 
     if (mappedInput.wasPressed(MappedInputManager::Button::Back)) {

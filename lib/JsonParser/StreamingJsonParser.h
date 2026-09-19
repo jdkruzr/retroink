@@ -18,7 +18,14 @@ struct JsonCallbacks {
 
 class StreamingJsonParser {
  public:
-  static constexpr size_t TOKEN_BUF_SIZE = 512;
+  // A string/number token longer than this is dropped entirely (see
+  // LargeTokenTruncation in StreamingJsonParserTest.cpp) rather than
+  // partially delivered, so this bounds the longest field this parser can
+  // read at all -- currently sized for release note bodies (see
+  // ReleaseJsonParser::releaseBody), not just short fields like URLs or
+  // tag names. This buffer is stack-allocated by every caller, so raise it
+  // with the caller's stack budget in mind (8KB main loop stack here).
+  static constexpr size_t TOKEN_BUF_SIZE = 1024;
   static constexpr size_t MAX_NESTING = 32;
 
   explicit StreamingJsonParser(const JsonCallbacks& callbacks);

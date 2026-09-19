@@ -6,6 +6,7 @@
 class OtaUpdater {
   bool updateAvailable = false;
   std::string latestVersion;
+  std::string releaseNotes;
   std::string otaUrl;
   std::string otaSha256;
   size_t otaSize = 0;
@@ -37,6 +38,7 @@ class OtaUpdater {
   OtaUpdater() = default;
   bool isUpdateNewer() const;
   const std::string& getLatestVersion() const;
+  const std::string& getReleaseNotes() const;
   OtaUpdaterError checkForUpdate();
   OtaUpdaterError installUpdate(ProgressCallback onProgress = nullptr, void* ctx = nullptr,
                                 std::atomic<bool>* cancelRequested = nullptr);
