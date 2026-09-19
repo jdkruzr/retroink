@@ -18,7 +18,7 @@ RetroInk is distributed under the MIT License. See [LICENSE](./LICENSE) and
 - Xteink X3
 - Xteink X4
 - Seeed Studio Sticky
-- Xteink X4 Pro (source build; hardware validation pending)
+- Xteink X4 Pro (source build; initial hardware boot verified)
 
 ## What RetroInk adds
 

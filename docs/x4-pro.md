@@ -2,7 +2,8 @@
 
 The X4 Pro uses an ESP32-S3 with 16 MB flash and 8 MB PSRAM. It needs a
 separate build from the ESP32-C3 X3/X4 and the differently wired Seeed Sticky.
-Hardware validation of this RetroInk target is pending.
+Initial hardware boot and restart are verified on a UC8179-panel unit.
+Interactive reading, touch mapping, and sleep/wake validation remain pending.
 
 ## Build
 
@@ -37,9 +38,15 @@ initialization in `setupDisplayAndFonts()`.
    before the first firmware write. Check the installed partition table before
    using an app-only update; do not assume the stock layout matches
    `partitions.csv`. Preserve the SD card and factory configuration.
-2. With a compatible flash layout established, upload using
-   `pio run -e x4-pro -t upload --upload-port /dev/ttyACM0` and monitor at
-   115200 baud. On Linux, the port needs the `cdc_acm` driver and your account
+2. Preserve an existing layout by writing the app image to the inactive OTA
+   partition at the offset read from that device's table, verifying the write,
+   and then selecting that slot with a fresh OTA record. A previously failed
+   slot may be marked ABORTED; writing new app bytes alone does not clear that
+   state. Follow `src/network/OtaBootSwitch.cpp` for the sequence, state, and
+   CRC format, retaining the valid fallback record. PlatformIO's normal upload
+   also writes bootloader/partition data, so use it only for an intentional
+   installation of the repo's full layout. Monitor at 115200 baud.
+   On Linux, the port needs the `cdc_acm` driver and your account
    needs access to the device (typically through `dialout`). Use the device's
    `/dev/serial/by-id/` path if multiple serial devices are connected.
 3. Confirm the boot log identifies the Pro profile, initializes PSRAM, detects
@@ -56,3 +63,23 @@ initialization in `setupDisplayAndFonts()`.
 The SDK's `docs/xteink-x4pro-support.md` records the board wiring and known
 hardware findings. Successful compilation alone does not validate this unit's
 panel, touch mapping, or power behavior.
+
+## Hardware boot verification — 2026-09-19
+
+One ESP32-S3 revision 0.2 unit reported 16 MB flash and 8 MB PSRAM. Its
+installed table used app0 at `0x10000` and app1 at `0x7f0000`, each 8064 KiB;
+these offsets differ from the repo's table and must not be assumed for other
+devices. Its failed app1 image targeted ESP32-C3 and was marked ABORTED.
+
+After a full flash backup, the 6,244,720-byte S3 image was written and
+hash-verified at app1. Only the failed OTA record was replaced (sequence 4,
+NEW state), preserving app0 and the partition table. After boot, readback
+confirmed the new record had become VALID; a second reset booted the S3
+firmware again.
+
+Both boots logged the `xteink_x4_pro` profile, a mounted SDMMC card, RTC,
+frontlight initialization, 8 MB PSRAM, and UC8179 detection from the display
+bus. Refreshes completed without a reset loop. At idle, logs reported about
+255 KB free internal heap and 8.32 MB free PSRAM. The log also reported no
+IMU and no installed dictionary; visual/input and reading checks are separate
+from this boot verification.
