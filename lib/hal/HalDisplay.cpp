@@ -1,5 +1,12 @@
+#include <BoardConfig.h>
 #include <HalDisplay.h>
 #include <HalGPIO.h>
+#include <Logging.h>
+
+#if FREEINK_DEVICE_X4PRO
+#include <XteinkDetect.h>
+#include <driver/gpio.h>
+#endif
 
 #include "HalSpiBus.h"
 
@@ -14,6 +21,25 @@ HalDisplay::~HalDisplay() {}
 
 void HalDisplay::begin(bool seamless, bool fastSplash) {
   HalSpiBus::Lock spiLock;
+
+#if FREEINK_DEVICE_X4PRO
+  // Probe before begin() selects the driver and SPI takes ownership of the pins.
+  // Sleep holds RST high; release it here so the probe can wake the controller
+  // with a reset pulse. EpdBus::begin() releases it too, but that is too late
+  // for detection and a sleeping UC8179 would be mistaken for an SSD1677.
+  static bool controllerResolved = false;
+  if (!controllerResolved) {
+    const int8_t resetPin = BoardConfig::ACTIVE.display.rst;
+    if (resetPin >= 0) {
+      const esp_err_t err = gpio_hold_dis(static_cast<gpio_num_t>(resetPin));
+      if (err != ESP_OK) {
+        LOG_ERR("DSP", "Could not release display reset hold (%d)", static_cast<int>(err));
+      }
+    }
+    freeink::applyXteinkDisplayController();
+    controllerResolved = true;
+  }
+#endif
 
   // Set X3-specific panel mode before initializing.
   if (gpio.deviceIsX3()) {

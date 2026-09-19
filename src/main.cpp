@@ -16,9 +16,6 @@
 #include <Logging.h>
 #include <Memory.h>
 #include <SPI.h>
-#if !defined(SIMULATOR) && !FREEINK_MCU_C3
-#include <XteinkDetect.h>
-#endif
 #include <builtinFonts/all.h>
 #include <uzlib.h>
 
@@ -727,19 +724,6 @@ void enterFocusDeepSleep(const uint32_t seconds) {
 
 void setupDisplayAndFonts(const bool seamless = false, const bool loadReaderResources = true,
                           const bool fastSplash = false) {
-#if !defined(SIMULATOR) && !FREEINK_MCU_C3
-  // C3 X3/X4 detection already runs in HalGPIO::begin() before SPI owns the
-  // panel pins. S3 boards initialize display SPI inside display.begin(), so an
-  // X4 Pro must resolve a UC8179 replacement panel here, before driver selection.
-  static bool controllerResolved = false;
-  if (!controllerResolved) {
-    controllerResolved = true;
-    if (freeink::applyXteinkDisplayController()) {
-      LOG_DBG("MAIN", "Panel controller: UltraChip UC81xx variant detected");
-    }
-  }
-#endif
-
 #ifdef SIMULATOR
   (void)seamless;
   (void)fastSplash;

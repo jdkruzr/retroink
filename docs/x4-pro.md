@@ -3,7 +3,8 @@
 The X4 Pro uses an ESP32-S3 with 16 MB flash and 8 MB PSRAM. It needs a
 separate build from the ESP32-C3 X3/X4 and the differently wired Seeed Sticky.
 Hardware boot, restart, the RetroInk interface, touch, and page buttons are
-verified on a UC8179-panel unit. Sleep/wake validation remains pending.
+verified on a UC8179-panel unit. Short-tap sleep/wake is also verified, including
+returning from the book-cover sleep screen to the normal UI.
 
 ## Build
 
@@ -29,8 +30,9 @@ The target enables the SDK's X4 Pro board profile, touch and capacitive Home
 key, dual-channel frontlight, and native SDMMC through SdFat's block-device
 interface. The single display framebuffer uses PSRAM with the SDK's existing
 internal-RAM fallback if that allocation fails. These flags apply only to the
-Pro target. Display-controller detection already runs before display SPI
-initialization in `setupDisplayAndFonts()`.
+Pro target. Display-controller detection runs in `HalDisplay::begin()` before
+display SPI initialization. It releases the reset pin's sleep hold before
+probing, so a sleeping UC8179 can answer and select the correct driver on wake.
 
 ## Reader navigation
 
@@ -92,3 +94,17 @@ bus. Refreshes completed without a reset loop. At idle, logs reported about
 255 KB free internal heap and 8.32 MB free PSRAM. The log also reported no
 IMU and no installed dictionary; visual/input and reading checks are separate
 from this boot verification.
+
+## Display detection after sleep
+
+The original wake failure accepted the short Power press and restored the
+frontlight, but the display probe returned `FF FF FF FF FF` and selected the
+default SSD1677 driver. Refreshes then waited 30 seconds while the sleep cover
+remained visible. The SDK holds display reset high during sleep; its normal
+display initialization released that hold only after the earlier probe.
+
+The Pro's HAL now releases the reset hold before probing and selecting the
+driver. A hardware sleep/wake cycle with short Power set to Sleep logged
+`PowerButton`, `shortAllowed=1`, `VER=00 00 01 FF FF`, and UC8179 selection.
+Subsequent display refreshes completed in about 0.56 or 1.50 seconds, and the
+user confirmed that the normal UI returned. No settings or cache reset is required.
