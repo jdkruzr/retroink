@@ -381,6 +381,8 @@ inline const std::vector<SettingInfo>& getBaseSettingsList() {
     add(SettingInfo::Enum(StrId::STR_SLEEP_COVER_FILTER, &CrossPointSettings::sleepScreenCoverFilter,
                           {StrId::STR_NONE_OPT, StrId::STR_FILTER_CONTRAST, StrId::STR_INVERTED},
                           "sleepScreenCoverFilter", StrId::STR_CAT_DISPLAY));
+    add(SettingInfo::Toggle(StrId::STR_CUSTOM_SLEEP_FAST_MODE, &CrossPointSettings::customSleepScreenFastMode,
+                            "customSleepScreenFastMode", StrId::STR_CAT_DISPLAY));
     add(SettingInfo::Enum(StrId::STR_QUICK_RESUME_TIMEOUT, &CrossPointSettings::quickResumeSleepScreen,
                           {StrId::STR_STATE_OFF, StrId::STR_STATE_ON}, "quickResumeSleepScreen",
                           StrId::STR_CAT_DISPLAY));
@@ -704,6 +706,8 @@ inline const std::vector<SettingInfo>& getBaseSettingsList() {
                             "showReadingGoalCountdown", StrId::STR_CAT_SYSTEM));
     add(SettingInfo::Toggle(StrId::STR_CHARGING_SCREEN, &CrossPointSettings::chargingScreenEnabled,
                             "chargingScreenEnabled", StrId::STR_CAT_DISPLAY));
+    add(SettingInfo::Toggle(StrId::STR_REDUCE_SCREEN_GHOSTING, &CrossPointSettings::reduceScreenGhosting,
+                            "reduceScreenGhosting", StrId::STR_CAT_DISPLAY));
     add(SettingInfo::Value(StrId::STR_FOCUS_HOURS, &CrossPointSettings::focusSessionHours, {0, 24, 1},
                            "focusSessionHours", StrId::STR_CAT_SYSTEM));
     add(SettingInfo::Value(StrId::STR_FOCUS_MINUTES, &CrossPointSettings::focusSessionMinutes, {0, 60, 5},
@@ -1117,7 +1121,7 @@ inline std::vector<SettingInfo> buildControlsSideButtonSettingsList(const std::v
 
 inline std::vector<SettingInfo> buildGroupedDisplaySettingsList(const std::vector<SettingInfo>& allSettings) {
   std::vector<SettingInfo> displaySettings;
-  displaySettings.reserve(8);
+  displaySettings.reserve(9);
 
   auto addDisplaySetting = [&](StrId nameId) {
     const auto it = std::find_if(allSettings.begin(), allSettings.end(),
@@ -1138,13 +1142,14 @@ inline std::vector<SettingInfo> buildGroupedDisplaySettingsList(const std::vecto
   addDisplaySetting(StrId::STR_RECENT_BOOKS_VIEW);
   addDisplaySetting(StrId::STR_SUNLIGHT_FADING_FIX);
   addDisplaySetting(StrId::STR_CHARGING_SCREEN);
+  addDisplaySetting(StrId::STR_REDUCE_SCREEN_GHOSTING);
 
   return displaySettings;
 }
 
 inline std::vector<SettingInfo> buildDisplaySleepSettingsList(const std::vector<SettingInfo>& allSettings) {
   std::vector<SettingInfo> sleepSettings;
-  sleepSettings.reserve(4);
+  sleepSettings.reserve(5);
 
   auto addSleepSetting = [&](StrId nameId, StrId displayNameId) {
     const auto it = std::find_if(allSettings.begin(), allSettings.end(),
@@ -1158,6 +1163,7 @@ inline std::vector<SettingInfo> buildDisplaySleepSettingsList(const std::vector<
   addSleepSetting(StrId::STR_SLEEP_SCREEN, StrId::STR_SLEEP_SCREEN_WALLPAPER);
   addSleepSetting(StrId::STR_SLEEP_COVER_MODE, StrId::STR_SLEEP_COVER_MODE_SHORT);
   addSleepSetting(StrId::STR_SLEEP_COVER_FILTER, StrId::STR_SLEEP_COVER_FILTER_SHORT);
+  addSleepSetting(StrId::STR_CUSTOM_SLEEP_FAST_MODE, StrId::STR_CUSTOM_SLEEP_FAST_MODE_SHORT);
   addSleepSetting(StrId::STR_QUICK_RESUME_TIMEOUT, StrId::STR_QUICK_RESUME_TIMEOUT);
 
   return sleepSettings;

@@ -331,6 +331,12 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t sleepScreenCoverMode = FIT;
   // Sleep screen cover filter
   uint8_t sleepScreenCoverFilter = NO_FILTER;
+  // Forces custom sleep screen images (folder of BMPs, or root /sleep.bmp)
+  // through the flat black/white path even when the source BMP has grayscale
+  // data, skipping the 3-pass grayscale render + extra panel refreshes. Only
+  // affects the Custom sleep screen mode, not the book-Cover mode (which has
+  // its own sleepScreenCoverFilter for this trade-off).
+  uint8_t customSleepScreenFastMode = 0;
   // Status bar settings (statusBar retained for migration only)
   uint8_t statusBar = FULL;
   uint8_t statusBarChapterPageCount = 1;
@@ -481,6 +487,11 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t focusTimerRefresh = FOCUS_TIMER_EVERY_MINUTE;
   // Fun System6-styled screen shown while plugged in and not reading (0 = off, 1 = on).
   uint8_t chargingScreenEnabled = 1;
+  // When on, returning Home from another activity (Library, Settings, File
+  // Manager, etc.) uses a HALF_REFRESH instead of a plain FAST_REFRESH, at
+  // the cost of a slightly longer transition. Off by default: FAST_REFRESH
+  // stays the default everywhere else this doesn't touch.
+  uint8_t reduceScreenGhosting = 0;
   // The shelf the on-device Library opens on. "" or "all" = All Books;
   // "toread"/"reading"/"finished"/"favorites" = the built-in smart shelves;
   // "c:<id>" = a RetroInkCustomShelves shelf id. Stored as text, not an index,

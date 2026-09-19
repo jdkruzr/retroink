@@ -1901,8 +1901,22 @@ void HomeActivity::render(RenderLock&&) {
   const auto& metrics = UITheme::getInstance().getMetrics();
   const auto pageWidth = renderer.getScreenWidth();
   const auto pageHeight = renderer.getScreenHeight();
-  const auto displayHomeBuffer = [this] {
-    const auto refreshMode = initialFullRefresh ? HalDisplay::FULL_REFRESH : HalDisplay::FAST_REFRESH;
+  // Captured before firstRenderDone flips true further down: true only for
+  // the very first render of this instance, i.e. the transition into Home
+  // from whatever activity was showing before, not later in-place redraws
+  // (selection changes, clock ticks) while the user stays on Home.
+  const bool isEntryRender = !firstRenderDone;
+  const auto displayHomeBuffer = [this, isEntryRender] {
+    HalDisplay::RefreshMode refreshMode = HalDisplay::FAST_REFRESH;
+    if (initialFullRefresh) {
+      refreshMode = HalDisplay::FULL_REFRESH;
+    } else if (isEntryRender && SETTINGS.reduceScreenGhosting) {
+      // A user-visible trade-off (Settings > Display > Reduce Screen
+      // Ghosting): HALF_REFRESH clears more of the previous screen's
+      // residue than a plain FAST_REFRESH, at a small time cost, without
+      // going all the way to a full panel refresh.
+      refreshMode = HalDisplay::HALF_REFRESH;
+    }
     initialFullRefresh = false;
     renderer.displayBuffer(refreshMode);
   };

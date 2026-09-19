@@ -591,7 +591,7 @@ void SleepActivity::renderCustomSleepScreen() const {
       return false;
     }
 
-    renderBitmapSleepScreen(bitmap);
+    renderBitmapSleepScreen(bitmap, SETTINGS.customSleepScreenFastMode != 0);
     return true;
   };
 
@@ -618,7 +618,7 @@ void SleepActivity::renderCustomSleepScreen() const {
   if (Storage.openFileForRead("SLP", "/sleep.bmp", file)) {
     Bitmap bitmap(file, true);
     if (bitmap.parseHeaders() == BmpReaderError::Ok) {
-      renderBitmapSleepScreen(bitmap);
+      renderBitmapSleepScreen(bitmap, SETTINGS.customSleepScreenFastMode != 0);
       return;
     }
   }
@@ -659,7 +659,7 @@ void SleepActivity::renderDefaultSleepScreen() const {
   renderer.displayBuffer(sleepRefreshMode(), TURN_OFF_SCREEN_AFTER_SLEEP_REFRESH);
 }
 
-void SleepActivity::renderBitmapSleepScreen(const Bitmap& bitmap) const {
+void SleepActivity::renderBitmapSleepScreen(const Bitmap& bitmap, const bool forceFastNoGreyscale) const {
   int x, y;
   const auto pageWidth = renderer.getScreenWidth();
   const auto pageHeight = renderer.getScreenHeight();
@@ -695,7 +695,7 @@ void SleepActivity::renderBitmapSleepScreen(const Bitmap& bitmap) const {
 
   renderer.clearScreen();
 
-  const bool hasGreyscale = bitmap.hasGreyscale() &&
+  const bool hasGreyscale = bitmap.hasGreyscale() && !forceFastNoGreyscale &&
                             SETTINGS.sleepScreenCoverFilter == CrossPointSettings::SLEEP_SCREEN_COVER_FILTER::NO_FILTER;
 
   // The gray nudge needs a half-refresh base. Clear the full panel to white
