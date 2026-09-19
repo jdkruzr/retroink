@@ -391,7 +391,7 @@ bool TxtReaderActivity::executeLongPressBackAction() {
       enterDeepSleep();
       return true;
     case CrossPointSettings::LONG_PRESS_MENU_ACTION::LONG_MENU_REFRESH_SCREEN:
-      pagesUntilFullRefresh = 1;
+      prepareManualRefresh();
       requestUpdate();
       return true;
     case CrossPointSettings::LONG_PRESS_MENU_ACTION::LONG_MENU_FILE_TRANSFER:
@@ -640,7 +640,8 @@ void TxtReaderActivity::renderPage() {
                            RetroInkGoalCountdown::sample(sessionStartLocalDateTime, sessionReadingSeconds, 0),
                            ReaderUtils::readerDarkModeEnabled());
 
-  ReaderUtils::displayWithRefreshCycle(renderer, pagesUntilFullRefresh);
+  ReaderUtils::displayWithRefreshCycle(renderer, pagesUntilFullRefresh, /*async=*/false, manualFullRefreshPending);
+  manualFullRefreshPending = false;
 
   if (SETTINGS.textAntiAliasing && ReaderUtils::readerForegroundBlack()) {
     ReaderUtils::renderAntiAliased(renderer, [&renderLines]() { renderLines(); });

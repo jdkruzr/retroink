@@ -183,14 +183,19 @@ inline PageTurnResult detectPageTurn(const MappedInputManager& input) {
 // Async callers must not touch the framebuffer until
 // renderer.waitRefreshComplete() and must rebuild the differential baseline
 // before the next page turn (the tiled grayscale cleanup does).
-inline void displayWithRefreshCycle(const GfxRenderer& renderer, int& pagesUntilFullRefresh, bool async = false) {
-  const auto mode = (pagesUntilFullRefresh <= 1) ? HalDisplay::HALF_REFRESH : HalDisplay::FAST_REFRESH;
+inline void displayWithRefreshCycle(const GfxRenderer& renderer, int& pagesUntilFullRefresh, bool async = false,
+                                    bool forceFull = false) {
+  // An explicit refresh must clear the panel even when its pixels are unchanged.
+  // Some controllers use differential waveforms for both HALF and FAST.
+  const auto mode = forceFull                      ? HalDisplay::FULL_REFRESH
+                    : (pagesUntilFullRefresh <= 1) ? HalDisplay::HALF_REFRESH
+                                                   : HalDisplay::FAST_REFRESH;
   if (async) {
     renderer.displayBufferAsync(mode);
   } else {
     renderer.displayBuffer(mode);
   }
-  if (pagesUntilFullRefresh <= 1) {
+  if (forceFull || pagesUntilFullRefresh <= 1) {
     pagesUntilFullRefresh = SETTINGS.getRefreshFrequency();
   } else {
     pagesUntilFullRefresh--;

@@ -6,6 +6,7 @@
 
 ### Fixed
 
+- Manual Refresh Screen actions now perform a full panel refresh in menus and books, including restoring grayscale text and images afterward.
 - X4 Pro units with a UC8179 display wake correctly from sleep instead of turning on the frontlight while leaving the book cover on screen.
 - The X4 Pro simulator now enables its Home key and frontlight, so device-specific navigation checks run.
 - Tapping the X4 Pro Home pad now exits an EPUB to Home, including when reader touch input is disabled.

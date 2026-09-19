@@ -510,11 +510,12 @@ bool handleGlobalPowerButtonAction(const CrossPointSettings::SHORT_PWRBTN action
       enterDeepSleep();
       return true;
     case CrossPointSettings::SHORT_PWRBTN::FORCE_REFRESH: {
-      if (SETTINGS.textAntiAliasing && activityManager.requestManualReaderRefresh()) {
+      LOG_INF("MAIN", "Manual full-screen refresh requested");
+      if (activityManager.requestManualReaderRefresh()) {
         return true;
       }
       RenderLock lock;
-      renderer.displayBuffer(HalDisplay::HALF_REFRESH);
+      renderer.displayBuffer(HalDisplay::FULL_REFRESH);
       return true;
     }
     case CrossPointSettings::SHORT_PWRBTN::SCREENSHOT: {

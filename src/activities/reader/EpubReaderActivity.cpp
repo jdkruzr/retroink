@@ -5860,6 +5860,7 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int fo
   if (!updatePanel) {
     return;
   }
+  const auto cleanupMode = manualFullRefreshPending ? HalDisplay::FULL_REFRESH : HalDisplay::HALF_REFRESH;
   if (pageHasImages) {
     // Double FAST_REFRESH with selective image blanking (pablohc's technique):
     // HALF_REFRESH sets particles too firmly for the grayscale LUT to adjust.
@@ -5874,7 +5875,7 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int fo
       // Image pages intentionally bypass the regular refresh cadence. Preserve
       // a pending clean base before their double-FAST grayscale pipeline.
       if (cleanImageBasePending) {
-        renderer.displayBuffer(HalDisplay::HALF_REFRESH);
+        renderer.displayBuffer(cleanupMode);
         cleanImageBasePending = false;
       }
       renderer.displayBuffer(HalDisplay::FAST_REFRESH);
@@ -5887,7 +5888,7 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int fo
       // text-only grayscale turns; other panels keep the FAST fallback behavior.
       renderer.displayGrayscaleBase(HalDisplay::FAST_REFRESH);
     } else {
-      renderer.displayBuffer(HalDisplay::HALF_REFRESH);
+      renderer.displayBuffer(cleanupMode);
     }
     // The image's own page is handled above and doesn't count toward the full
     // refresh cadence. But the grayscale pass below leaves gray charge in the
@@ -5901,7 +5902,7 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int fo
       // Cleanup turns still need the stronger HALF pass, but X3 grayscale
       // overlays settle better if the OEM precondition step runs before the
       // gray planes are written.
-      renderer.displayBuffer(HalDisplay::HALF_REFRESH);
+      renderer.displayBuffer(cleanupMode);
       renderer.preconditionGrayscale();
       pagesUntilFullRefresh = SETTINGS.getRefreshFrequency();
     } else if (overlapRefresh) {
@@ -5914,8 +5915,9 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int fo
       pagesUntilFullRefresh--;
     }
   } else {
-    ReaderUtils::displayWithRefreshCycle(renderer, pagesUntilFullRefresh);
+    ReaderUtils::displayWithRefreshCycle(renderer, pagesUntilFullRefresh, /*async=*/false, manualFullRefreshPending);
   }
+  manualFullRefreshPending = false;
   if (needsAnyGrayscale) {
     ensureGrayscaleStripScratch();
   }

@@ -15,6 +15,7 @@ class TxtReaderActivity final : public Activity {
   int currentPage = 0;
   int totalPages = 1;
   int pagesUntilFullRefresh = 0;
+  bool manualFullRefreshPending = false;
   unsigned long pageShownAtMs = 0UL;
   uint32_t sessionReadingSeconds = 0;
   ReadingStatsDateTime sessionStartLocalDateTime;
@@ -74,6 +75,7 @@ class TxtReaderActivity final : public Activity {
   void render(RenderLock&&) override;
   bool prepareManualRefresh() override {
     pagesUntilFullRefresh = 1;
+    manualFullRefreshPending = true;
     return true;
   }
   bool isReaderActivity() const override { return true; }

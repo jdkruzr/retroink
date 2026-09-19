@@ -1269,6 +1269,13 @@ class SimulatorSmokeTest {
       const int width = renderer.getScreenWidth();
       const int height = renderer.getScreenHeight();
       if (width <= 0 || height <= 0) fail("Touch smoke test has invalid screen dimensions");
+      SETTINGS.shortPwrBtn = CrossPointSettings::SHORT_PWRBTN::SLEEP;
+      SETTINGS.longPwrBtn = CrossPointSettings::SHORT_PWRBTN::FORCE_REFRESH;
+      inputScript.push_back(press(MappedInputManager::Button::Power));
+      inputScript.push_back(render("Reader holding Power for manual refresh", 60));
+      inputScript.push_back(release(MappedInputManager::Button::Power));
+      inputScript.push_back(render("Reader after manual refresh release", 4));
+      inputScript.push_back(assertActivity("EpubReader"));
       LOG_INF("SMOKE", "Running touch reader input script with %d page turn(s)", turns);
       for (int i = 0; i < turns; ++i) {
         inputScript.push_back(touchDown(width * 5 / 6, height / 2));
@@ -1366,6 +1373,11 @@ class SimulatorSmokeTest {
         inputScript.push_back(touchDown(width - 32, titleBarY));
         inputScript.push_back(touchRelease(width - 32, titleBarY));
         inputScript.push_back(render("Home opened by reader menu Home icon", 4));
+        inputScript.push_back(assertActivity("Home"));
+        inputScript.push_back(press(MappedInputManager::Button::Power));
+        inputScript.push_back(render("Home holding Power for manual refresh", 60));
+        inputScript.push_back(release(MappedInputManager::Button::Power));
+        inputScript.push_back(render("Home after manual refresh release", 4));
         inputScript.push_back(assertActivity("Home"));
       }
       return;

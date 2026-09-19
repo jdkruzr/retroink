@@ -42,6 +42,10 @@ probing, so a sleeping UC8179 can answer and select the correct driver on wake.
 - Swipe downward in the reader to open the frontlight panel.
 - In menus, tap the title bar's small square at the upper left to go back.
   The reader menu also has a Home icon at the upper right.
+- A Power-button action assigned to Refresh Screen performs a full panel clear
+  in menus and books, then restores the content and any grayscale. With short
+  Power set to Sleep and long Power set to Refresh Screen, hold for at least
+  0.4 seconds; releasing afterward should leave the current screen open.
 
 ## First hardware test
 

@@ -24,6 +24,7 @@ class XtcReaderActivity final : public Activity {
 
   uint32_t currentPage = 0;
   int pagesUntilFullRefresh = 0;
+  bool manualFullRefreshPending = false;
   unsigned long pageShownAtMs = 0UL;
   uint32_t sessionReadingSeconds = 0;
   RetroInkGoalCountdown goalCountdown;
@@ -81,6 +82,11 @@ class XtcReaderActivity final : public Activity {
   void onExit() override;
   void loop() override;
   void render(RenderLock&&) override;
+  bool prepareManualRefresh() override {
+    pagesUntilFullRefresh = 1;
+    manualFullRefreshPending = true;
+    return true;
+  }
   bool isReaderActivity() const override { return true; }
   bool canSnapshotForSleepOverlay() const override { return true; }
   bool handlesReaderPowerSettingsOverride() const override { return true; }

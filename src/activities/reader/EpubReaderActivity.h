@@ -106,6 +106,7 @@ class EpubReaderActivity final : public Activity {
   std::string pendingFootnotePreviewAnchor;
   bool activeFootnotePreview = false;
   int pagesUntilFullRefresh = 0;
+  bool manualFullRefreshPending = false;
   // A Sync Progress return can leave non-reader UI on the panel. This is a
   // one-shot clean base for its first image page; normal image-page cleanup
   // uses pagesUntilFullRefresh independently.
@@ -435,6 +436,7 @@ class EpubReaderActivity final : public Activity {
   void render(RenderLock&& lock) override;
   bool prepareManualRefresh() override {
     pagesUntilFullRefresh = 1;
+    manualFullRefreshPending = true;
     cleanImageBasePending = true;
     return true;
   }
