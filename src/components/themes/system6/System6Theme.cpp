@@ -284,11 +284,24 @@ void System6Theme::drawButtonHints(GfxRenderer& r, const char* btn1, const char*
   for (int i = 0; i < 4; ++i) {
     if (!labels[i] || !labels[i][0]) continue;
     const int x = buttonPositions[invertText ? 3 - i : i];
-    constexpr int textPadding = 8;
-    const int maxTextWidth = buttonWidth - textPadding * 2;
+    constexpr int preferredPadding = 8;
+    constexpr int minPadding = 2;
     constexpr int font = UI_10_FONT_ID;
     char clipped[160];
-    const int textWidth = fitLabel(r, font, labels[i], maxTextWidth, clipped);
+    int textWidth = fitLabel(r, font, labels[i], buttonWidth - preferredPadding * 2, clipped);
+    if (strcmp(clipped, labels[i]) != 0) {
+      // Didn't fit at the normal padding: before accepting a truncated
+      // label, try again with the tightest padding that still looks like a
+      // button, so a label that's only barely too wide (a category name
+      // like "Controls" cycling through this same slot) still shows in
+      // full instead of getting cut off.
+      char tighter[160];
+      const int tighterWidth = fitLabel(r, font, labels[i], buttonWidth - minPadding * 2, tighter);
+      if (strcmp(tighter, labels[i]) == 0) {
+        textWidth = tighterWidth;
+        std::memcpy(clipped, tighter, sizeof(clipped));
+      }
+    }
     const int textOffset = std::max(0, (buttonHeight - r.getLineHeight(font)) / 2);
     const int textY = invertText ? bottomMargin + keyBottomInset + textOffset : keyTop + textOffset;
     r.drawText(font, x + (buttonWidth - textWidth) / 2, textY, clipped);
