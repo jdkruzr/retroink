@@ -34,13 +34,33 @@ int fitLabel(const GfxRenderer& r, int font, const char* text, int width, char (
     while (n && (static_cast<unsigned char>(text[n]) & 0xc0) == 0x80) --n;
   out[n] = '\0';
   int measured = r.getTextWidth(font, out);
-  while (n && measured > width) {
+  if (measured <= width) return measured;
+
+  // Doesn't fit: shrink and append an ellipsis so a cut label reads as
+  // truncated rather than as a different, complete word (e.g. a button hint
+  // for "Controls" silently becoming "Control").
+  constexpr char kEllipsis[] = "...";
+  constexpr size_t kEllipsisLen = sizeof(kEllipsis) - 1;
+  while (true) {
+    if (n == 0) {
+      std::memcpy(out, kEllipsis, kEllipsisLen + 1);
+      measured = r.getTextWidth(font, out);
+      if (measured > width) {
+        out[0] = '\0';
+        measured = 0;
+      }
+      return measured;
+    }
     --n;
     while (n && (static_cast<unsigned char>(out[n]) & 0xc0) == 0x80) --n;
-    out[n] = '\0';
-    measured = r.getTextWidth(font, out);
+    if (n + kEllipsisLen < sizeof(out) - 1) {
+      std::memcpy(out + n, kEllipsis, kEllipsisLen + 1);
+      measured = r.getTextWidth(font, out);
+      if (measured <= width) return measured;
+    } else {
+      out[n] = '\0';
+    }
   }
-  return measured;
 }
 void label(const GfxRenderer& r, int font, int x, int y, int width, const char* text, bool black = true) {
   char clipped[160];

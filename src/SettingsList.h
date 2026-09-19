@@ -398,9 +398,6 @@ inline const std::vector<SettingInfo>& getBaseSettingsList() {
         StrId::STR_REFRESH_FREQ, &CrossPointSettings::refreshFrequency,
         {StrId::STR_PAGES_1, StrId::STR_PAGES_5, StrId::STR_PAGES_10, StrId::STR_PAGES_15, StrId::STR_PAGES_30},
         "refreshFrequency", StrId::STR_CAT_DISPLAY));
-    add(SettingInfo::Enum(StrId::STR_UI_SCALE, &CrossPointSettings::uiScale, {StrId::STR_SMALL, StrId::STR_LARGE},
-                          "uiScale", StrId::STR_CAT_DISPLAY)
-            .withEnumRawValues({CrossPointSettings::UI_SCALE_SMALL, CrossPointSettings::UI_SCALE_LARGE}));
     add(SettingInfo::Enum(StrId::STR_RECENT_BOOKS_VIEW, &CrossPointSettings::recentBooksView,
                           {StrId::STR_LIST_VIEW, StrId::STR_GRID_VIEW}, "recentBooksView", StrId::STR_CAT_DISPLAY));
     add(SettingInfo::Toggle(StrId::STR_SUNLIGHT_FADING_FIX, &CrossPointSettings::fadingFix, "fadingFix",
@@ -738,6 +735,8 @@ inline const std::vector<SettingInfo>& getBaseSettingsList() {
     add(SettingInfo::Toggle(StrId::STR_TRACK_READING_STATS, &CrossPointSettings::trackReadingStats, "trackReadingStats",
                             StrId::STR_CAT_SYSTEM));
 #endif
+    add(SettingInfo::Toggle(StrId::STR_SHOW_HOME_READING_STATS, &CrossPointSettings::showHomeReadingStats,
+                            "showHomeReadingStats", StrId::STR_CAT_SYSTEM));
 
     // Frontlight quick-panel state: persisted + web-exposed, category-less so
     // it stays off the Settings screen (edited from the swipe-down panel).
@@ -1138,7 +1137,6 @@ inline std::vector<SettingInfo> buildGroupedDisplaySettingsList(const std::vecto
   }
   addDisplaySetting(StrId::STR_REFRESH_FREQ);
   addDisplaySetting(StrId::STR_UI_THEME);
-  addDisplaySetting(StrId::STR_UI_SCALE);
   addDisplaySetting(StrId::STR_RECENT_BOOKS_VIEW);
   addDisplaySetting(StrId::STR_SUNLIGHT_FADING_FIX);
   addDisplaySetting(StrId::STR_CHARGING_SCREEN);
@@ -1214,8 +1212,9 @@ inline std::vector<SettingInfo> buildSystemFilesCacheSettingsList(const std::vec
 
 inline std::vector<SettingInfo> buildSystemReadingStatsSettingsList(const std::vector<SettingInfo>& allSettings) {
   std::vector<SettingInfo> settings;
-  settings.reserve(7);
+  settings.reserve(8);
   addSettingByName(settings, allSettings, StrId::STR_TRACK_READING_STATS);
+  addSettingByName(settings, allSettings, StrId::STR_SHOW_HOME_READING_STATS);
   addSettingByName(settings, allSettings, StrId::STR_READING_GOAL);
   addSettingByName(settings, allSettings, StrId::STR_READING_GOAL_COUNTDOWN);
   addSettingByName(settings, allSettings, StrId::STR_FOCUS_SESSION_LENGTH);

@@ -1122,7 +1122,7 @@ void HomeActivity::renderCarouselFrameToCurrentBuffer(int bookIdx, BookReadingSt
       frameStats = loadRecentBookStats(recentBooks[bookIdx]);
       frameProgressPercent = RecentBookProgress::loadPercent(recentBooks[bookIdx]);
     }
-    if (hasAnyBookStats(frameStats)) frameStatsPtr = &frameStats;
+    if (SETTINGS.showHomeReadingStats && hasAnyBookStats(frameStats)) frameStatsPtr = &frameStats;
   }
 
   LyraCarouselTheme::setPreRenderIndex(bookIdx);
@@ -1948,11 +1948,12 @@ void HomeActivity::render(RenderLock&&) {
     coverRectW = pageWidth;
     coverRectH = metrics.homeCoverTileHeight;
 
-    GUI.drawRecentBookCover(renderer, Rect{0, metrics.homeTopPadding, pageWidth, metrics.homeCoverTileHeight},
-                            recentBooks, selectorIndex, coverRendered, coverBufferStored, bufferRestored,
-                            std::bind(&HomeActivity::storeCoverBuffer, this),
-                            hasAnyBookStats(currentBookStats) ? &currentBookStats : nullptr, currentBookProgressPercent,
-                            &globalStats, currentBookChapterTitle.c_str());
+    GUI.drawRecentBookCover(
+        renderer, Rect{0, metrics.homeTopPadding, pageWidth, metrics.homeCoverTileHeight}, recentBooks, selectorIndex,
+        coverRendered, coverBufferStored, bufferRestored, std::bind(&HomeActivity::storeCoverBuffer, this),
+        SETTINGS.showHomeReadingStats && hasAnyBookStats(currentBookStats) ? &currentBookStats : nullptr,
+        currentBookProgressPercent, SETTINGS.showHomeReadingStats ? &globalStats : nullptr,
+        currentBookChapterTitle.c_str());
 
     const int homeNavCount = minimalHomeNavCount(!recentBooks.empty());
     if (minimalHomeNavIndex >= homeNavCount) {
@@ -2062,10 +2063,11 @@ void HomeActivity::render(RenderLock&&) {
   coverRectW = pageWidth;
   coverRectH = homeCoverTileHeight;
 
-  GUI.drawRecentBookCover(renderer, Rect{0, metrics.homeTopPadding, pageWidth, homeCoverTileHeight}, recentBooks,
-                          selectorIndex, coverRendered, coverBufferStored, bufferRestored,
-                          std::bind(&HomeActivity::storeCoverBuffer, this),
-                          hasAnyBookStats(currentBookStats) ? &currentBookStats : nullptr, currentBookProgressPercent);
+  GUI.drawRecentBookCover(
+      renderer, Rect{0, metrics.homeTopPadding, pageWidth, homeCoverTileHeight}, recentBooks, selectorIndex,
+      coverRendered, coverBufferStored, bufferRestored, std::bind(&HomeActivity::storeCoverBuffer, this),
+      SETTINGS.showHomeReadingStats && hasAnyBookStats(currentBookStats) ? &currentBookStats : nullptr,
+      currentBookProgressPercent);
 
   const int menuStartY = metrics.homeTopPadding + homeCoverTileHeight + metrics.homeMenuTopOffset;
   const int menuEndY = pageHeight - metrics.buttonHintsHeight;

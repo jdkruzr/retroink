@@ -539,6 +539,10 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   // Debug/test builds can disable stat writes so navigation tests do not affect personal reading stats.
   uint8_t trackReadingStats = 1;
 #endif
+  // Shows the current book's stats and the global streak/completed-books
+  // summary on the Home screen's recent-book card. On by default; stats are
+  // still tracked and available from the Reading Stats screen when off.
+  uint8_t showHomeReadingStats = 1;
 
   ~CrossPointSettings() = default;
 
