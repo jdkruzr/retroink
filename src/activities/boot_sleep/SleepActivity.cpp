@@ -791,7 +791,10 @@ void SleepActivity::renderReadingStatsSleepScreen() const {
 
   if (SETTINGS.uiTheme == CrossPointSettings::SYSTEM6) {
     RetroInkReadingDeskView::renderToday(renderer, nullptr, GlobalReadingStats::load());
-  } else if (!halClock.isAvailable()) {
+    renderer.displayBuffer(sleepRefreshMode(), TURN_OFF_SCREEN_AFTER_SLEEP_REFRESH);
+    return;
+  }
+  if (!halClock.isAvailable()) {
     const GlobalReadingStats deviceStats = GlobalReadingStats::load();
     const bool hasSyncedStats = GlobalReadingStats::hasSyncedStats();
     const GlobalReadingStats allDevicesStats =
