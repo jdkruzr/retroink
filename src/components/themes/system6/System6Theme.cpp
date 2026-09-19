@@ -157,15 +157,21 @@ void menuIcon(const GfxRenderer& r, UIIcon icon, int x, int y, bool black) {
 
 void System6Theme::drawHeader(const GfxRenderer& r, Rect rect, const char* title, const char* subtitle,
                               bool readerContext) const {
+  drawHeaderWithRightReserve(r, rect, title, subtitle, readerContext, 0);
+}
+
+void System6Theme::drawHeaderWithRightReserve(const GfxRenderer& r, Rect rect, const char* title, const char* subtitle,
+                                              bool readerContext, int rightReserve) const {
   const bool home = title == nullptr;
   int top, right, bottom, left;
   r.getOrientedViewableTRBL(&top, &right, &bottom, &left);
   const int x = std::max(rect.x + 8, left + 4);
   const int end = std::min(rect.x + rect.width - 8, r.getScreenWidth() - right - 4);
-  const int h = 40;
+  const int h = System6Metrics::titleBarHeight;
   const int y = std::max(rect.y, top);
   if (end - x < 80 || y < top) return;
-  const int contentBottom = r.getScreenHeight() - System6Metrics::values.buttonHintsHeight - 4;
+  const auto& m = UITheme::getInstance().getMetrics();
+  const int contentBottom = r.getScreenHeight() - std::max(bottom, m.buttonHintsHeight) - 4;
   desktop(r, 0, r.getScreenHeight());
   if (!home) {
     frame(r, Rect{x, y, end - x, std::max(h, contentBottom - y)});
@@ -175,12 +181,12 @@ void System6Theme::drawHeader(const GfxRenderer& r, Rect rect, const char* title
   frame(r, Rect{x, y, end - x, h});
   for (int dy = 7; dy < h - 5; dy += 4) r.drawLine(x + 6, y + dy, end - 7, y + dy);
 
-  const auto& m = System6Metrics::values;
+  const int statusEnd = std::min(end, rect.x + rect.width - std::max(0, rightReserve));
   constexpr int statusFont = UI_10_FONT_ID;
   const int statusTextY = y + (h - r.getLineHeight(statusFont)) / 2;
   const bool showPercentage =
       SETTINGS.hideBatteryPercentage != CrossPointSettings::HIDE_BATTERY_PERCENTAGE::HIDE_ALWAYS;
-  const int batteryX = end - 12 - m.batteryWidth;
+  const int batteryX = statusEnd - 12 - m.batteryWidth;
   const int batteryY = y + (h - m.batteryHeight) / 2;
   const uint16_t percentage = powerManager.getBatteryPercentage();
   char percentageText[8] = {};
@@ -209,7 +215,7 @@ void System6Theme::drawHeader(const GfxRenderer& r, Rect rect, const char* title
     statusLeft = subtitleX;
   }
 
-  r.fillRect(statusLeft - 6, y + 3, end - statusLeft + 1, h - 6, false);
+  r.fillRect(statusLeft - 6, y + 3, statusEnd - statusLeft + 1, h - 6, false);
   if (subtitle && subtitle[0]) r.drawText(statusFont, subtitleX, statusTextY, clippedSubtitle);
   if (showClock) r.drawText(statusFont, clockX, statusTextY, timeText);
   if (showClock && showPercentage) {
@@ -234,7 +240,7 @@ void System6Theme::drawHeader(const GfxRenderer& r, Rect rect, const char* title
     r.fillRect(x + 6, y + 2, 32, h - 4, false);
     macIcon(r, x + 9, y + 3);
   } else {
-    // Decorative window box; navigation still uses the physical Back button.
+    // TouchHeaderBackButton uses this window box as its Back affordance.
     r.fillRect(x + 9, y + 13, 14, 14, false);
     r.drawRect(x + 9, y + 13, 14, 14);
   }

@@ -2,8 +2,8 @@
 
 The X4 Pro uses an ESP32-S3 with 16 MB flash and 8 MB PSRAM. It needs a
 separate build from the ESP32-C3 X3/X4 and the differently wired Seeed Sticky.
-Initial hardware boot and restart are verified on a UC8179-panel unit.
-Interactive reading, touch mapping, and sleep/wake validation remain pending.
+Hardware boot, restart, the RetroInk interface, touch, and page buttons are
+verified on a UC8179-panel unit. Sleep/wake validation remains pending.
 
 ## Build
 
@@ -31,6 +31,15 @@ interface. The single display framebuffer uses PSRAM with the SDK's existing
 internal-RAM fallback if that allocation fails. These flags apply only to the
 Pro target. Display-controller detection already runs before display SPI
 initialization in `setupDisplayAndFonts()`.
+
+## Reader navigation
+
+- Tap the capacitive Home pad to return from an EPUB to Home. This also works
+  with reader touchscreen input disabled.
+- Hold the Home pad or swipe upward in the reader to open the reader menu.
+- Swipe downward in the reader to open the frontlight panel.
+- In menus, tap the title bar's small square at the upper left to go back.
+  The reader menu also has a Home icon at the upper right.
 
 ## First hardware test
 

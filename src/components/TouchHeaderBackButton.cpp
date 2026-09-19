@@ -10,6 +10,7 @@
 #include "components/UITheme.h"
 #include "components/UiAppHelpers.h"
 #include "components/icons/touchHeaderIcons.h"
+#include "components/themes/system6/System6Theme.h"
 #include "fontIds.h"
 
 namespace fui = freeink::ui;
@@ -85,6 +86,13 @@ void draw(GfxRenderer& renderer, const Rect& header, const char* title, const bo
 
 void draw(GfxRenderer& renderer, fui::GfxRendererTarget& target, const Rect& header, const char* title,
           const bool readerContext, const int rightReserve, const char* subtitle, const int verticalOffset) {
+  if (SETTINGS.uiTheme == CrossPointSettings::UI_THEME::SYSTEM6) {
+    // RetroInk already draws the title, status and close box in one band.
+    // The ordinary touch header would paint a second title and arrow over it.
+    static_cast<const System6Theme&>(GUI).drawHeaderWithRightReserve(renderer, header, title, subtitle, readerContext,
+                                                                     rightReserve);
+    return;
+  }
   Layout back = layout(header);
   const int offset = effectiveVerticalOffset(back, header, verticalOffset);
   back.iconRect.y += offset;
@@ -111,6 +119,10 @@ void drawCompact(GfxRenderer& renderer, const char* title, const bool readerCont
                  const int verticalOffset) {
   const auto& metrics = UITheme::getInstance().getMetrics();
   const Rect header = compactHeaderRect(renderer);
+  if (SETTINGS.uiTheme == CrossPointSettings::UI_THEME::SYSTEM6) {
+    draw(renderer, header, title, readerContext);
+    return;  // The themed title bar owns the clock; do not overlay the date.
+  }
   const int rightReserve =
       metrics.batteryWidth + 2 * metrics.headerSidePadding + (showDate ? headerDateReservedWidth(renderer) : 0);
   draw(renderer, header, title, readerContext, rightReserve, nullptr, verticalOffset);

@@ -3,6 +3,7 @@
 #include "components/themes/BaseTheme.h"
 
 namespace System6Metrics {
+constexpr int titleBarHeight = 40;
 constexpr ThemeMetrics makeValues() {
   auto v = BaseMetrics::values;
   v.batteryBarHeight = 0;
@@ -33,6 +34,8 @@ class System6Theme final : public BaseTheme {
  public:
   void drawHeader(const GfxRenderer& renderer, Rect rect, const char* title, const char* subtitle = nullptr,
                   bool readerContext = false) const override;
+  void drawHeaderWithRightReserve(const GfxRenderer& renderer, Rect rect, const char* title, const char* subtitle,
+                                  bool readerContext, int rightReserve) const;
   void drawButtonHints(GfxRenderer& renderer, const char* btn1, const char* btn2, const char* btn3, const char* btn4,
                        bool allowInvertedText = false) const override;
   void drawButtonMenu(GfxRenderer& renderer, Rect rect, int buttonCount, int selectedIndex,

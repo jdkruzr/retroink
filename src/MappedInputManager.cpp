@@ -519,7 +519,7 @@ bool MappedInputManager::wasLeftEdgeGesture() const { return wasBackGesture(); }
 
 bool MappedInputManager::hasHomeKeyHardware() const {
 #ifdef SIMULATOR
-#ifdef SIMULATOR_DEVICE_X4PRO
+#ifdef SIMULATOR_DEVICE_X4_PRO
   return true;
 #else
   return false;
@@ -570,7 +570,9 @@ bool MappedInputManager::wasReaderMenuGesture() const {
   return hasHomeKeyHardware() ? direction == SwipeDir::Up : direction == SwipeDir::Down;
 }
 
-bool MappedInputManager::wasReaderHomeGesture() const { return !hasHomeKeyHardware() && wasSwipe() == SwipeDir::Up; }
+bool MappedInputManager::wasReaderHomeGesture() const {
+  return hasHomeKeyHardware() ? wasHomeGesture() : wasSwipe() == SwipeDir::Up;
+}
 
 bool MappedInputManager::wasReaderLightPanelGesture() const {
   return hasHomeKeyHardware() && wasSwipe() == SwipeDir::Down;

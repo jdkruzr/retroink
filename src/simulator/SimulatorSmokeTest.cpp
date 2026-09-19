@@ -557,6 +557,9 @@ class SimulatorSmokeTest {
         if (!SimulatorHomeKeyInput::verifyTimingContract()) {
           fail("Simulator Home key timing contract failed");
         }
+#if CROSSINK_APP_CAP_TOUCH && defined(SIMULATOR_DEVICE_X4_PRO)
+        if (!mappedInputManager.hasHomeKey()) fail("X4 Pro simulator must expose its Home key");
+#endif
         applyRequestedTheme();
         if (SETTINGS.uiTheme == CrossPointSettings::SYSTEM6) {
           ReadingStatsDateTime today;
@@ -1273,6 +1276,12 @@ class SimulatorSmokeTest {
         inputScript.push_back(render("Reader after touch page forward", 4));
       }
       if (mappedInputManager.hasHomeKey()) {
+        inputScript.push_back(homeTap());
+        inputScript.push_back(render("Home opened from reader with touch enabled", 4));
+        inputScript.push_back(assertActivity("Home"));
+        inputScript.push_back(openSmokeBook());
+        inputScript.push_back(render("Reader reopened after Home with touch enabled", 8));
+        inputScript.push_back(assertActivity("EpubReader"));
         // X4 Pro reserves the top-edge swipe for its frontlight overlay and
         // moves the reader menu to the bottom edge.
         inputScript.push_back(touchDown(width / 2, 8));
@@ -1346,6 +1355,19 @@ class SimulatorSmokeTest {
       inputScript.push_back(touchRelease(width / 2, optionsListTop + rowHeight / 2));
       inputScript.push_back(render("Reader Options touch swipe navigation", 3));
       inputScript.push_back(assertActivity("ReaderOptions"));
+
+      if (SETTINGS.uiTheme == CrossPointSettings::SYSTEM6) {
+        // Tap the visible Mac close box, then the reader menu's Home icon.
+        const int titleBarY = metrics.topPadding + 24;
+        inputScript.push_back(touchDown(24, titleBarY));
+        inputScript.push_back(touchRelease(24, titleBarY));
+        inputScript.push_back(render("Reader Menu restored by title bar close box", 4));
+        inputScript.push_back(assertActivity("EpubReaderMenu"));
+        inputScript.push_back(touchDown(width - 32, titleBarY));
+        inputScript.push_back(touchRelease(width - 32, titleBarY));
+        inputScript.push_back(render("Home opened by reader menu Home icon", 4));
+        inputScript.push_back(assertActivity("Home"));
+      }
       return;
     }
 #endif

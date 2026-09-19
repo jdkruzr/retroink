@@ -18,6 +18,7 @@
 #include "components/UITheme.h"
 #include "components/UIThemeTokens.h"
 #include "components/UiAppHelpers.h"
+#include "components/themes/system6/System6Theme.h"
 #include "fontIds.h"
 
 namespace fui = freeink::ui;
@@ -130,6 +131,10 @@ void drawBookmarkTabIcon(const GfxRenderer& renderer, int x, int y, const bool f
 }
 
 Rect readerMenuHeaderActionRect(const Rect& header, const ThemeMetrics& metrics) {
+  if (SETTINGS.uiTheme == CrossPointSettings::UI_THEME::SYSTEM6) {
+    return Rect{header.x + header.width - headerActionRightPadding - headerActionHitSize, header.y, headerActionHitSize,
+                std::min(header.height, System6Metrics::titleBarHeight)};
+  }
   const int actionHeight = std::min(header.height, headerActionHitSize);
   // Compact headers keep the battery inline at the right edge, so leave its
   // widest percentage-and-glyph band untouched. Tall detached headers place
@@ -652,6 +657,11 @@ void EpubReaderMenuActivity::render(RenderLock&&) {
     const int titleRightReserve = headerRect.x + headerRect.width - homeRect.x + headerActionGap;
     TouchHeaderBackButton::draw(renderer, uiTarget, headerRect, title.c_str(), true, titleRightReserve);
     TouchRegistry::getInstance().add(homeTouchRect, static_cast<int>(TOUCH_HOME_ICON_INDEX), TouchRegistry::Tab);
+    if (SETTINGS.uiTheme == CrossPointSettings::UI_THEME::SYSTEM6) {
+      // Keep the title-bar stripes out of the transparent Home glyph.
+      renderer.fillRect(homeRect.x + (homeRect.width - tabIconSize) / 2 - 2,
+                        homeRect.y + (homeRect.height - tabIconSize) / 2 - 2, tabIconSize + 4, tabIconSize + 4, false);
+    }
     drawSdkIcon(uiTarget, icon_home_24, homeRect.x + (homeRect.width - tabIconSize) / 2,
                 homeRect.y + (homeRect.height - tabIconSize) / 2);
   } else {
