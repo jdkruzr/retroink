@@ -18,6 +18,7 @@ RetroInk is distributed under the MIT License. See [LICENSE](./LICENSE) and
 - Xteink X3
 - Xteink X4
 - Seeed Studio Sticky
+- Xteink X4 Pro (source build; hardware validation pending)
 
 ## What RetroInk adds
 
@@ -199,6 +200,16 @@ pio run -e default --target upload
 ```
 
 Use `-e sticky` only when building for a Seeed Sticky device. The X3/X4 firmware uses the default environment.
+
+The X4 Pro uses a different processor and needs its own image. Build it with:
+
+```sh
+pio run -e x4-pro
+```
+
+The app image is `.pio/build/x4-pro/firmware-x4-pro.bin`. X3/X4 and Sticky
+images are not compatible with the Pro. See [X4 Pro bring-up](./docs/x4-pro.md)
+for build prerequisites and hardware verification.
 
 See [Testing and Debugging](./docs/development/testing-debugging.md) for serial logging, simulator checks, static analysis, and bug-report guidance.
 

@@ -69,7 +69,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: [default, sticky]
+        environment: [default, sticky, x4-pro]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -117,6 +117,14 @@ jobs:
           name: firmware-x3-x4
           path: |
             .pio/build/default/firmware-x3-x4.bin
+          if-no-files-found: error
+
+      - name: Upload X4 Pro firmware
+        if: matrix.environment == 'x4-pro'
+        uses: actions/upload-artifact@v7
+        with:
+          name: firmware-x4-pro
+          path: .pio/build/x4-pro/firmware-x4-pro.bin
           if-no-files-found: error
 
   # This job is used as the PR required actions check, allows for changes to other steps in the future without breaking

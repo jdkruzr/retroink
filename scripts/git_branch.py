@@ -1,7 +1,7 @@
 """
 PlatformIO pre-build script: inject git info into version defines.
 
-  default:       1.1.0               (plain version, this fork's own hardware builds)
+  default/x4-pro: 1.1.0              (plain version, this fork's own hardware builds)
   production:    1.1.0               (when $CROSSINK_RELEASE_VERSION is set)
   default RC:    1.1.0-rc+<hash>       (when $CROSSINK_RC_HASH is set)
   test & debug:          1.2.6-<branch>+<5-char-hash>
@@ -131,7 +131,7 @@ def inject_version(env):
     project_dir = env['PROJECT_DIR']
     pioenv = env['PIOENV']
 
-    if pioenv == 'default':
+    if pioenv in ('default', 'x4-pro'):
         if os.environ.get('CROSSINK_RC_HASH'):
             version_string = get_release_candidate_version(project_dir)
             print(f'RetroInk RC build version: {version_string}')

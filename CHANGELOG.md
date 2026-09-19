@@ -1,3 +1,9 @@
+## [Unreleased]
+
+### Added
+
+- A dedicated Xteink X4 Pro firmware build, using its ESP32-S3, touch and Home key, frontlight, and native SD-card interface.
+
 ## [RetroInk 0.2.0 test] - 2026-09-15
 
 ### Added

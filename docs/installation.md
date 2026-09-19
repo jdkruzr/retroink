@@ -15,6 +15,10 @@ you want to modify the code yourself.
 - Xteink X3, X4
 - Seeed Studio Sticky
 
+For the ESP32-S3 **Xteink X4 Pro**, use the dedicated
+[X4 Pro source build and bring-up instructions](./x4-pro.md). The X3/X4
+release image and ESP32-C3 commands below do not apply to the Pro.
+
 ## Install via the web flash tool (easiest)
 
 No software to install. Connect your device with USB-C, then go to
